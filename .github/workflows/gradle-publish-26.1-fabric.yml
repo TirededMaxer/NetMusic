@@ -25,6 +25,8 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew build --no-daemon --stacktrace
+      - name: Verify packaged radio audio decoding
+        run: python3 scripts/verify_radio_audio.py
       - name: Inspect playable artifact
         run: |
           python3 - <<'PY'
@@ -43,10 +45,10 @@ jobs:
               assert metadata['depends']['minecraft'] == '~26.1.2'
               print(jars[0], len(stations), 'stations')
           PY
-          cp build/radio-directory-report.json build/libs/
+          cp build/radio-directory-report.json build/radio-audio-report.json build/libs/
           cp README.md build/libs/README.txt
           cd build/libs
-          sha256sum *-all.jar *-sources.jar radio-directory-report.json README.txt > SHA256SUMS.txt
+          sha256sum *-all.jar *-sources.jar radio-directory-report.json radio-audio-report.json README.txt > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: netmusic-26.1.2-fabric
@@ -55,13 +57,14 @@ jobs:
             build/libs/*-sources.jar
             build/libs/SHA256SUMS.txt
             build/libs/radio-directory-report.json
+            build/libs/radio-audio-report.json
             build/libs/README.txt
       - name: Draft GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="broadcast-26.1.2-${{ github.run_number }}"
-          gh release create "$TAG" --target "${{ github.sha }}" --draft --title "NetMusic 26.1.2 Fabric — Broadcast Edition" --notes-file README.md build/libs/*-all.jar build/libs/*-sources.jar build/libs/SHA256SUMS.txt build/libs/radio-directory-report.json build/libs/README.txt
+          gh release create "$TAG" --target "${{ github.sha }}" --draft --title "NetMusic 26.1.2 Fabric — Broadcast Edition" --notes-file README.md build/libs/*-all.jar build/libs/*-sources.jar build/libs/SHA256SUMS.txt build/libs/radio-directory-report.json build/libs/radio-audio-report.json build/libs/README.txt
           echo "Release remains draft until its uploaded asset sizes and digests are verified."
       - name: Upload test reports
         if: always()
@@ -72,3 +75,4 @@ jobs:
             build/reports/tests/
             build/test-results/
             build/radio-directory-report.json
+            build/radio-audio-report.json

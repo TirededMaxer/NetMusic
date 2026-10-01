@@ -32,7 +32,7 @@ GitHub Actions enumerates every entry in the [official 云听 directory](https:/
 City classification uses station titles and [published city names](https://github.com/modood/Administrative-divisions-of-China).
 Stations missing from that public directory or lacking a public internet stream cannot be guaranteed.
 Time-limited Chinese stream addresses are refreshed from the official directory at playback time rather than stored in the JAR.
-The release includes a directory coverage report.
+The release includes a directory coverage report and verified regional additions, including 天津滨海之声、滨海音乐 and 滨海文艺. Supplemental sources and verification dates are recorded in the report.
 
 Foreign stations include BBC World Service, NPR, RFI, Franceinfo, Deutschlandfunk/Kultur/Nova and ABC Radio National.
 Network and broadcaster regional restrictions can affect availability.
@@ -40,4 +40,4 @@ Network and broadcaster regional restrictions can affect availability.
 ## GitHub build
 
 All changes are committed through GitHub and all compilation/tests run in GitHub Actions; no local build is required.
-The workflow generates the directory, runs playback policy tests, builds the shaded playable JAR, and uploads checksums and reports.
+The workflow generates the directory, runs playback policy and HLS tests, verifies packaged MP3/AAC/HLS audio decoding, builds the shaded playable JAR, and uploads checksums and reports.

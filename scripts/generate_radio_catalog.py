@@ -59,6 +59,14 @@ def main():
         return name, stations
     results = list(ThreadPoolExecutor(max_workers=4).map(collect, provinces))
     stations = [station for _, rows in results for station in rows]
+    supplements = json.loads(Path("scripts/regional_stations.json").read_text(encoding="utf-8"))
+    seen_urls = {station["url"] for station in stations}
+    additions = []
+    for station in supplements:
+        if station["url"] not in seen_urls:
+            stations.append({key: station[key] for key in ("name", "url", "group", "province", "city")})
+            additions.append(station)
+            seen_urls.add(station["url"])
     foreign = [
         ("BBC World Service", "英国", "https://stream.live.vc.bbcmedia.co.uk/bbc_world_service"),
         ("NPR", "美国", "https://npr-ice.streamguys1.com/live.mp3"),
@@ -82,6 +90,7 @@ def main():
     report = {"source": "https://www.radio.cn/pc-portal/erji/radioStation.html",
               "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
               "total": len(stations), "regions": counts, "foreign": len(foreign),
+              "verified_regional_additions": additions,
               "city_classification": "Official station title matched against published administrative city names",
               "coverage": "All entries returned by the official public directory, not unavailable or unlisted stations."}
     Path("build").mkdir(exist_ok=True)

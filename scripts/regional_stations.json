@@ -1,0 +1,32 @@
+[
+  {
+    "name": "天津滨海之声广播",
+    "url": "https://traffic.jbh.tjbh.com/live/FM100.1/playlist.m3u8",
+    "group": "国内",
+    "province": "天津",
+    "city": "滨海新区",
+    "source": "https://worldradiomap.com/cn/tianjin",
+    "verified_stream_at": "2026-10-02",
+    "verification": "Public broadcaster HLS master, media playlist and nonempty AAC segment fetched successfully"
+  },
+  {
+    "name": "天津滨海音乐广播 TIKI FM",
+    "url": "https://traffic.jbh.tjbh.com/live/FM100.5/playlist.m3u8",
+    "group": "国内",
+    "province": "天津",
+    "city": "滨海新区",
+    "source": "https://worldradiomap.com/cn/tianjin",
+    "verified_stream_at": "2026-10-02",
+    "verification": "Public broadcaster HLS master, media playlist and nonempty AAC segment fetched successfully"
+  },
+  {
+    "name": "天津滨海文艺广播",
+    "url": "https://traffic.jbh.tjbh.com/live/FM101.7/playlist.m3u8",
+    "group": "国内",
+    "province": "天津",
+    "city": "滨海新区",
+    "source": "https://worldradiomap.com/cn/tianjin",
+    "verified_stream_at": "2026-10-02",
+    "verification": "Public broadcaster HLS master, media playlist and nonempty AAC segment fetched successfully"
+  }
+]
