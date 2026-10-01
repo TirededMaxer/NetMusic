@@ -7,7 +7,7 @@ import com.github.tartaricacid.netmusic.client.audio.MusicBufferedInputStream;
 import com.github.tartaricacid.netmusic.util.Mp3Util;
 import com.google.common.net.HttpHeaders;
 
-import net.sourceforge.jaad.spi.javasound.AACAudioFileReader;
+import com.github.tartaricacid.netmusic.client.audio.AdtsAudioStream;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
@@ -48,7 +48,7 @@ public class DirectHttpHandler implements IAudioStreamHandler {
         bufferedInputStream.reset();
         try {
             return first == 0xff && (second & 0xf6) == 0xf0
-                    ? new AACAudioFileReader().getAudioInputStream(bufferedInputStream)
+                    ? AdtsAudioStream.open(bufferedInputStream)
                     : AudioSystem.getAudioInputStream(bufferedInputStream);
         } catch (IOException | UnsupportedAudioFileException e) {
             bufferedInputStream.close();

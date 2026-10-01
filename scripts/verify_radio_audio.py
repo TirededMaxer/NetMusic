@@ -57,7 +57,13 @@ def main():
     records = []
     failures = []
     for index, (name, url) in enumerate(probes):
-        data = hls_sample(url) if ".m3u8" in url else fetch(url)[0]
+        try:
+            data = hls_sample(url) if ".m3u8" in url else fetch(url)[0]
+        except Exception as error:
+            records.append({"name": name, "network_unavailable": str(error)})
+            print(name, "Network unavailable:", error, flush=True)
+            if index < 3: failures.append(name)
+            continue
         print(name, "header=" + data[:24].hex(), flush=True)
         path = output / (str(index) + ".audio")
         path.write_bytes(data)

@@ -11,8 +11,8 @@ class AudioDecodeProbe {
                 var reader = (javax.sound.sampled.spi.AudioFileReader) Class.forName(args[1]).getConstructor().newInstance();
                 encoded = reader.getAudioInputStream(input);
              } else if ((bytes[0] & 255) == 255 && (bytes[1] & 0xf6) == 0xf0) {
-                var reader = (javax.sound.sampled.spi.AudioFileReader) Class.forName(args[1].replace("TSAudioFileReader", "AACAudioFileReader")).getConstructor().newInstance();
-                encoded = reader.getAudioInputStream(input);
+                encoded = (AudioInputStream) Class.forName("com.github.tartaricacid.netmusic.client.audio.AdtsAudioStream")
+                        .getMethod("open", InputStream.class).invoke(null, input);
             } else {
                 encoded = AudioSystem.getAudioInputStream(input);
             }
