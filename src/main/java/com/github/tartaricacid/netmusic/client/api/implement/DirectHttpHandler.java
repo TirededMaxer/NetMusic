@@ -7,6 +7,7 @@ import com.github.tartaricacid.netmusic.client.audio.MusicBufferedInputStream;
 import com.github.tartaricacid.netmusic.util.Mp3Util;
 import com.google.common.net.HttpHeaders;
 
+import net.sourceforge.jaad.spi.javasound.AACAudioFileReader;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
@@ -42,6 +43,16 @@ public class DirectHttpHandler implements IAudioStreamHandler {
         ChunkedAudioStream stream = new ChunkedAudioStream(request);
         BufferedInputStream bufferedInputStream = new MusicBufferedInputStream(stream);
         Mp3Util.skipID3(bufferedInputStream);
-        return AudioSystem.getAudioInputStream(bufferedInputStream);
+        bufferedInputStream.mark(2);
+        int first = bufferedInputStream.read(), second = bufferedInputStream.read();
+        bufferedInputStream.reset();
+        try {
+            return first == 0xff && (second & 0xf6) == 0xf0
+                    ? new AACAudioFileReader().getAudioInputStream(bufferedInputStream)
+                    : AudioSystem.getAudioInputStream(bufferedInputStream);
+        } catch (IOException | UnsupportedAudioFileException e) {
+            bufferedInputStream.close();
+            throw e;
+        }
     }
 }

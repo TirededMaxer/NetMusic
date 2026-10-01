@@ -11,7 +11,7 @@ public final class BigMegaphoneClientManager {
     private static RadioStateMessage state;
     private static BigMegaphoneSound sound;
     private static ClientLevel level;
-    private static long retryAt;
+    private static long retryAt, soundStartedAt;
     private static int failures;
     private BigMegaphoneClientManager() {}
     public static void handleState(RadioStateMessage next) {
@@ -34,12 +34,17 @@ public final class BigMegaphoneClientManager {
         try {
             sound = new BigMegaphoneSound(state.pos(), state.session(), URI.create(state.url()).toURL(), state.gain());
             mc.getSoundManager().play(sound);
+            soundStartedAt = mc.level.getGameTime();
         } catch (Exception error) { NetMusic.LOGGER.error("Invalid radio URL", error); failures = 5; }
     }
     public static void clientTick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level != level || mc.player == null) { clearAll(); level = mc.level; return; }
-        if (sound != null && sound.isStopped()) { sound = null; retryAt = mc.level.getGameTime() + 40; }
+        long now = mc.level.getGameTime();
+        if (sound != null && (sound.isStopped() || (now - soundStartedAt >= 40 && now % 19 == 0 &&
+                !mc.getSoundManager().soundEngine.tickingSounds.contains(sound)))) {
+            stop(); retryAt = now + 40;
+        }
         startIfNeeded();
     }
     public static void clearAll() { stop(); state = null; failures = 0; retryAt = 0; level = null; }

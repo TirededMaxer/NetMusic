@@ -1,11 +1,16 @@
 """Fetch bounded public samples on GitHub and verify the codecs in the actual shaded JAR."""
-import json, subprocess, urllib.request, urllib.parse, zipfile
+import json, subprocess, urllib.request, urllib.parse, zipfile, time
 from pathlib import Path
 
-def fetch(url, limit=262144):
-    request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(request, timeout=25) as response:
-        return response.read(limit), response.geturl()
+def fetch(url, limit=65536):
+    for attempt in range(4):
+        try:
+            request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(request, timeout=25) as response:
+                return response.read(limit), response.geturl()
+        except Exception:
+            if attempt == 3: raise
+            time.sleep(2 ** attempt)
 
 def hls_sample(url):
     for _ in range(4):
@@ -45,6 +50,7 @@ def main():
     ] + [(row["name"], row["url"]) for row in json.loads(Path("scripts/regional_stations.json").read_text())]
     jar = next(Path("build/libs").glob("*-all.jar"))
     with zipfile.ZipFile(jar) as archive:
+        print(archive.read("META-INF/services/javax.sound.sampled.spi.AudioFileReader").decode(), flush=True)
         reader = next(name[:-6].replace("/", ".") for name in archive.namelist() if name.endswith("/TSAudioFileReader.class"))
     logging_jars = list((Path.home() / '.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api').glob('**/*.jar'))
     classpath = ':'.join([str(jar)] + [str(path) for path in logging_jars[:1]])
@@ -52,6 +58,7 @@ def main():
     failures = []
     for index, (name, url) in enumerate(probes):
         data = hls_sample(url) if ".m3u8" in url else fetch(url)[0]
+        print(name, "header=" + data[:24].hex(), flush=True)
         path = output / (str(index) + ".audio")
         path.write_bytes(data)
         result = subprocess.run(["java", "--class-path", classpath, "scripts/AudioDecodeProbe.java", str(path), reader],

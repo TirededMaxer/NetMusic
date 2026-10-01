@@ -7,6 +7,7 @@ import com.github.tartaricacid.netmusic.util.BigMegaphoneUtil;
 import com.google.common.net.HttpHeaders;
 import net.sourceforge.jaad.m3u8.M3U8InputStream;
 import net.sourceforge.jaad.spi.javasound.TSAudioFileReader;
+import net.sourceforge.jaad.spi.javasound.AACAudioFileReader;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -47,12 +48,14 @@ public class M3u8Handler implements IAudioStreamHandler {
         final M3U8InputStream m3U8InputStream = new M3U8InputStream(NetWorker.HTTP_CLIENT, playlistRequest, tsSegmentRequest);
         final BufferedInputStream bis = new BufferedInputStream(m3U8InputStream, 5 * 1024 * 1024);
         Mp3Util.skipID3(bis);
-        bis.mark(1);
-        int first = bis.read();
+        bis.mark(2);
+        int first = bis.read(), second = bis.read();
         bis.reset();
         try {
             return first == 0x47 ? new TSAudioFileReader().getAudioInputStream(bis)
-                    : AudioSystem.getAudioInputStream(bis);
+                    : (first == 0xff && (second & 0xf6) == 0xf0)
+                        ? new AACAudioFileReader().getAudioInputStream(bis)
+                        : AudioSystem.getAudioInputStream(bis);
         } catch (IOException | UnsupportedAudioFileException e) {
             bis.close();
             throw e;
