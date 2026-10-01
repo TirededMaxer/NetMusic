@@ -58,6 +58,8 @@ public class MusicPlayerRenderer implements BlockEntityRenderer<TileEntityMusicP
             state.discRotation = (float) ((2 * Math.PI / 40) * (((double) System.currentTimeMillis() / 50) % 40));
         }
 
+        state.currentLine = Component.empty();
+        state.translatedLine = null;
         if (!GeneralConfig.ENABLE_PLAYER_LYRICS.get()) {
             return;
         }

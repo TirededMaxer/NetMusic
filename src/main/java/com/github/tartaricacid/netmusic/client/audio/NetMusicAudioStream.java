@@ -2,7 +2,6 @@ package com.github.tartaricacid.netmusic.client.audio;
 
 import com.github.tartaricacid.netmusic.NetMusic;
 import com.github.tartaricacid.netmusic.client.api.AudioStreamHandlerManager;
-import com.github.tartaricacid.netmusic.config.GeneralConfig;
 import net.minecraft.client.sounds.AudioStream;
 import org.lwjgl.BufferUtils;
 
@@ -43,10 +42,8 @@ public class NetMusicAudioStream implements AudioStream {
         AudioFormat targetFormat = getTargetPCMAudioFormat(originalFormat);
         AudioInputStream targetInputStream = AudioSystem.getAudioInputStream(targetFormat, originalInputStream);
 
-        if (GeneralConfig.ENABLE_STEREO.get()) {
-            targetFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, originalFormat.getSampleRate(), 16,
-                    1, 2, originalFormat.getSampleRate(), false);
-        } else {
+        targetFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, originalFormat.getSampleRate(), 16,
+                1, 2, originalFormat.getSampleRate(), false); else {
             targetFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, originalFormat.getSampleRate(), 16,
                     2, 4, originalFormat.getSampleRate(), false);
         }

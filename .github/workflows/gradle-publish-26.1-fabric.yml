@@ -21,6 +21,8 @@ jobs:
           cache: 'gradle'
       - name: Generate official station directory
         run: python3 scripts/generate_radio_catalog.py
+      - name: Check revised UI and language coverage
+        run: python3 scripts/verify_revision.py
       - name: Build and test
         run: |
           chmod +x gradlew
@@ -38,6 +40,9 @@ jobs:
               names = jar.namelist()
               assert 'com/github/tartaricacid/netmusic/playback/WorldPlaybackManager.class' in names
               assert 'com/github/tartaricacid/netmusic/client/command/ClientCommands.class' in names
+              assert 'com/github/tartaricacid/netmusic/client/gui/NetMusicControlScreen.class' in names
+              assert 'com/github/tartaricacid/netmusic/client/audio/LyricsActionBar.class' in names
+              assert not any('maid' in n.lower() or 'backpack' in n.lower() or 'NetMusicCommand.class' in n for n in names)
               assert not any('Computer' in n or 'LocalFileHandler' in n or 'Preset' in n or '/computer.' in n for n in names)
               stations = json.loads(jar.read('assets/netmusic/radio_stations.json'))
               assert len(stations) > 500

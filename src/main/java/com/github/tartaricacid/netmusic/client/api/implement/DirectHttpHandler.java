@@ -1,6 +1,6 @@
 package com.github.tartaricacid.netmusic.client.api.implement;
 
-import com.github.tartaricacid.netmusic.api.NetEaseMusic;
+import com.github.tartaricacid.netmusic.api.NetWorker;
 import com.github.tartaricacid.netmusic.client.api.IAudioStreamHandler;
 import com.github.tartaricacid.netmusic.client.audio.ChunkedAudioStream;
 import com.github.tartaricacid.netmusic.client.audio.MusicBufferedInputStream;
@@ -35,7 +35,7 @@ public class DirectHttpHandler implements IAudioStreamHandler {
     public AudioInputStream handle(URL url) throws UnsupportedAudioFileException, IOException {
         Function<Long, HttpRequest> request = start -> HttpRequest
                 .newBuilder(URI.create(url.toString()))
-                .header(HttpHeaders.USER_AGENT, NetEaseMusic.getUserAgent())
+                .header(HttpHeaders.USER_AGENT, NetWorker.USER_AGENT)
                 .header(HttpHeaders.RANGE, "bytes=%d-".formatted(start))
                 .GET().build();
 

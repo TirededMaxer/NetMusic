@@ -60,17 +60,17 @@ public class NetMusicSound extends AbstractTickableSoundInstance {
     public void tick() {
         Level world = Minecraft.getInstance().level;
         if (world == null) {
-            this.stop(); return;
+            LyricsActionBar.clear(this); this.stop(); return;
         }
         var player = Minecraft.getInstance().player;
-        this.volume = player == null ? 0 : com.github.tartaricacid.netmusic.playback.PlaybackRules.gain(player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos)), 100);
+        this.volume = player == null ? 0 : com.github.tartaricacid.netmusic.playback.PlaybackRules.gain(player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos)));
         tick++;
         if (tick > tickTimes + 50) {
             BlockEntity te = world.getBlockEntity(pos);
             if (te instanceof TileEntityMusicPlayer musicPlay) {
                 musicPlay.lyricRecord = null;
             }
-            this.stop();
+            LyricsActionBar.clear(this); this.stop(); return;
         } else {
             if (world.getGameTime() % 8 == 0) {
                 for (int i = 0; i < 2; i++) {
@@ -87,13 +87,14 @@ public class NetMusicSound extends AbstractTickableSoundInstance {
         // 依据 tick 更新歌词显示
         if (lyricRecord != null) {
             lyricRecord.updateCurrentLine(tick);
+            if (!isStopped() && volume > 0) LyricsActionBar.show(this, lyricRecord, tick);
         }
 
         BlockEntity te = world.getBlockEntity(pos);
         if (te instanceof TileEntityMusicPlayer musicPlay) {
             if (!musicPlay.isPlay()) {
                 musicPlay.lyricRecord = null;
-                this.stop();
+                LyricsActionBar.clear(this); this.stop();
             } else {
                 musicPlay.lyricRecord = lyricRecord;
             }
@@ -102,7 +103,8 @@ public class NetMusicSound extends AbstractTickableSoundInstance {
 
     private void errorStop() {
         // 直接把 tick 设置为结束的时间点，这样就能在下一次 tick 时正常结束
-        this.tick = tickTimes;
+        this.tick = tickTimes + 51;
+        LyricsActionBar.clear(this);
         MutableComponent error = Component.translatable("message.netmusic.music_player.play_error");
         Minecraft.getInstance().gui.setOverlayMessage(error, false);
     }
@@ -112,7 +114,7 @@ public class NetMusicSound extends AbstractTickableSoundInstance {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return new NetMusicAudioStream(this.songUrl, this.elapsedTicks);
-            } catch (IOException | UnsupportedAudioFileException e) {
+            } catch (Exception e) {
                 NetMusic.LOGGER.error("Failed to create audio stream for URL: {}", songUrl, e);
                 Minecraft.getInstance().submit(this::errorStop);
             }

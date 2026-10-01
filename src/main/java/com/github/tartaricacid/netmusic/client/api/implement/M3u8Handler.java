@@ -1,6 +1,5 @@
 package com.github.tartaricacid.netmusic.client.api.implement;
 
-import com.github.tartaricacid.netmusic.api.NetEaseMusic;
 import com.github.tartaricacid.netmusic.api.NetWorker;
 import com.github.tartaricacid.netmusic.client.api.IAudioStreamHandler;
 import com.github.tartaricacid.netmusic.util.BigMegaphoneUtil;
@@ -37,11 +36,11 @@ public class M3u8Handler implements IAudioStreamHandler {
         URI uri = mediaPlaylist(URI.create(url.toString()));
         Supplier<HttpRequest> playlistRequest = () -> HttpRequest.newBuilder(uri)
                 .timeout(M3U8_TIMEOUT)
-                .header(HttpHeaders.USER_AGENT, NetEaseMusic.getUserAgent())
+                .header(HttpHeaders.USER_AGENT, NetWorker.USER_AGENT)
                 .GET().build();
 
         Function<URI, HttpRequest> tsSegmentRequest = tsUri -> HttpRequest.newBuilder(tsUri)
-                .timeout(TS_TIMEOUT).header(HttpHeaders.USER_AGENT, NetEaseMusic.getUserAgent())
+                .timeout(TS_TIMEOUT).header(HttpHeaders.USER_AGENT, NetWorker.USER_AGENT)
                 .GET().build();
 
         // 获取 M3U8 网络流，并套上 5MB 缓冲 (为了支持格式嗅探)
@@ -66,7 +65,7 @@ public class M3u8Handler implements IAudioStreamHandler {
         URI current = start;
         for (int depth = 0; depth < 4; depth++) {
             var response = NetWorker.send(HttpRequest.newBuilder(current).timeout(M3U8_TIMEOUT)
-                    .header(HttpHeaders.USER_AGENT, NetEaseMusic.getUserAgent()).GET().build(),
+                    .header(HttpHeaders.USER_AGENT, NetWorker.USER_AGENT).GET().build(),
                     HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) throw new IOException("HLS playlist HTTP " + response.statusCode());
             URI child = HlsPlaylist.variant(response.uri(), response.body());

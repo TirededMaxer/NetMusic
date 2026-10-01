@@ -33,7 +33,8 @@ public final class RadioDirectoryApi {
         try { URI uri = URI.create(url); return "https".equals(uri.getScheme()) && "www.radio.cn".equals(uri.getHost()) && "/pc-portal/erji/radioStation.html".equals(uri.getPath()) && uri.getQuery() != null; }
         catch (Exception e) { return false; }
     }
-    public static URI resolve(String url) throws IOException {
+    public static URI resolve(String url) throws IOException { return resolveCandidates(url).getFirst(); }
+    public static List<URI> resolveCandidates(String url) throws IOException {
         Map<String, String> params = new HashMap<>();
         String query = URI.create(url).getRawQuery();
         if (query == null) throw new IOException("Missing station ID");
@@ -43,12 +44,14 @@ public final class RadioDirectoryApi {
         for (JsonElement element : request("/web/appBroadcast/list", Map.of("categoryId", "0", "provinceCode", province))) {
             JsonObject station = element.getAsJsonObject();
             if (!id.equals(station.get("contentId").getAsString())) continue;
+            Set<URI> candidates = new LinkedHashSet<>();
             for (String key : new String[] {"playUrlLow", "playUrlMulti", "mp3PlayUrlHigh", "mp3PlayUrlLow"}) {
                 if (station.has(key) && !station.get(key).isJsonNull()) {
                     String stream = station.get(key).getAsString();
-                    if (stream.startsWith("http://") || stream.startsWith("https://")) return URI.create(stream);
+                    if (stream.startsWith("http://") || stream.startsWith("https://")) candidates.add(URI.create(stream));
                 }
             }
+            if (!candidates.isEmpty()) return List.copyOf(candidates);
         }
         throw new IOException("Station is unavailable in the official directory");
     }

@@ -16,9 +16,11 @@ public final class MusicPlayManager {
     private static SoundInstance current;
     private static volatile long generation;
     public static long beginRequest() { stopCurrent(); return generation; }
+    public static boolean isCurrentSound(SoundInstance sound) { return current == sound; }
     public static boolean isCurrent(long request) { return request == generation; }
     public static void stopCurrent() {
         generation++;
+        LyricsActionBar.clear(current);
         if (current != null) Minecraft.getInstance().getSoundManager().stop(current);
         current = null;
     }

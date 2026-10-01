@@ -37,7 +37,6 @@ public class BigMegaphoneSound extends AbstractTickableSoundInstance {
         this.x = pos.getX() + 0.5f;
         this.y = pos.getY() + 0.5f;
         this.z = pos.getZ() + 0.5f;
-        // 当 volume 大于 1 时，此时控制的就是播放范围，距离为 16 * volume
         this.volume = volume;
         this.attenuation = SoundInstance.Attenuation.NONE;
         this.relative = true;
@@ -50,6 +49,9 @@ public class BigMegaphoneSound extends AbstractTickableSoundInstance {
         if (level == null) {
             this.stop();
         } else {
+            var player = Minecraft.getInstance().player;
+            this.volume = player == null ? 0 : com.github.tartaricacid.netmusic.playback.PlaybackRules.gain(
+                    player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos)));
             if (level.getGameTime() % 8 == 0) {
                 RandomSource random = level.getRandom();
                 for (int i = 0; i < 2; i++) {
@@ -80,7 +82,7 @@ public class BigMegaphoneSound extends AbstractTickableSoundInstance {
                 AudioStream stream = new NetMusicAudioStream(this.streamUrl);
                 mc.submit(() -> BigMegaphoneClientManager.handleStreamOpenSuccess(this.pos, this.sessionId, this));
                 return stream;
-            } catch (IOException | UnsupportedAudioFileException e) {
+            } catch (Exception e) {
                 mc.submit(() -> {
                     mc.gui.setOverlayMessage(Component.translatable("message.netmusic.big_megaphone.play_error"), false);
                     BigMegaphoneClientManager.handleStreamOpenFailure(this.pos, this.sessionId, this, e);

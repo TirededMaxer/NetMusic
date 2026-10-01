@@ -16,18 +16,16 @@ import org.jspecify.annotations.Nullable;
 
 public class TileEntityBigMegaphone extends BlockEntity {
     private String streamUrl = "", displayName = "";
-    private int volume = 100;
-    private boolean broadcasting, registered;
+    private boolean broadcasting, registered, lastRedstoneSignal;
     public TileEntityBigMegaphone(BlockPos pos, BlockState state) { super(InitBlocks.BIG_MEGAPHONE_TE, pos, state); }
     @Override public void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
         output.putString("StreamUrl", streamUrl); output.putString("DisplayName", displayName);
-        output.putInt("Volume", volume); output.putBoolean("Broadcasting", broadcasting);
+        output.putBoolean("Broadcasting", broadcasting);
     }
     @Override public void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
         streamUrl = input.getStringOr("StreamUrl", ""); displayName = input.getStringOr("DisplayName", "");
-        volume = Math.clamp(input.getIntOr("Volume", 100), 0, 100);
         broadcasting = input.getBooleanOr("Broadcasting", false);
     }
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider provider) { return saveWithoutMetadata(provider); }
@@ -35,20 +33,24 @@ public class TileEntityBigMegaphone extends BlockEntity {
     public String getStreamUrl() { return streamUrl; }
     public String getDisplayName() { return displayName; }
     public int getMaxRange() { return 1024; }
-    public int getVolume() { return volume; }
     public boolean isBroadcasting() { return broadcasting; }
-    public void setVolume(int volume) { this.volume = Math.clamp(volume, 0, 100); markDirty(); }
     public void syncWorld(String url, String name, boolean enabled) {
         if (streamUrl.equals(url) && displayName.equals(name) && broadcasting == enabled) return;
         streamUrl = url; displayName = name; broadcasting = enabled; markDirty();
     }
-    public boolean applyConfig(String url, String name, int volume) {
+    public boolean applyConfig(String url, String name) {
         if (!(level instanceof ServerLevel sl)) return false;
-        WorldPlaybackManager.get(sl.getServer()).configure(this, url.trim(), name.trim(), Math.clamp(volume, 0, 100));
+        WorldPlaybackManager.get(sl.getServer()).configure(this, url.trim(), name.trim());
         return true;
     }
-    // Commands and the editor control the global switch. Redstone cannot desynchronize relays.
-    public void onRedstoneSignalChanged(boolean signal) {}
+    public void onRedstoneSignalChanged(boolean signal) {
+        if (!(level instanceof ServerLevel sl) || lastRedstoneSignal == signal) return;
+        lastRedstoneSignal = signal;
+        if (signal) {
+            var manager = WorldPlaybackManager.get(sl.getServer());
+            manager.setRadioEnabled(!manager.radioEnabled());
+        }
+    }
     public void startBroadcast() { if (level instanceof ServerLevel sl) WorldPlaybackManager.get(sl.getServer()).setRadioEnabled(true); }
     public void stopBroadcast() { if (level instanceof ServerLevel sl) WorldPlaybackManager.get(sl.getServer()).setRadioEnabled(false); }
     @Override public void preRemoveSideEffects(BlockPos pos, BlockState state) {
@@ -57,7 +59,9 @@ public class TileEntityBigMegaphone extends BlockEntity {
     }
     public static void tick(Level level, BlockPos pos, BlockState state, TileEntityBigMegaphone horn) {
         if (!horn.registered && level instanceof ServerLevel sl) {
-            horn.registered = true; WorldPlaybackManager.get(sl.getServer()).register(horn);
+            horn.registered = true;
+            horn.lastRedstoneSignal = level.hasNeighborSignal(pos);
+            WorldPlaybackManager.get(sl.getServer()).register(horn);
         }
     }
     public void markDirty() {

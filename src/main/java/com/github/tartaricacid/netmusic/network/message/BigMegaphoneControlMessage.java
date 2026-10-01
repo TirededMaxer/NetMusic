@@ -14,7 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.StringUtils;
 
-public record BigMegaphoneControlMessage(BlockPos pos, String url, String name, int range,
+public record BigMegaphoneControlMessage(BlockPos pos, String url, String name,
                                          Action action) implements CustomPacketPayload {
     public static final Type<BigMegaphoneControlMessage> TYPE = new Type<>(Identifier.fromNamespaceAndPath(NetMusic.MOD_ID, "big_megaphone_control"));
     public static final StreamCodec<ByteBuf, BigMegaphoneControlMessage> STREAM_CODEC = StreamCodec.composite(
@@ -24,8 +24,6 @@ public record BigMegaphoneControlMessage(BlockPos pos, String url, String name, 
             BigMegaphoneControlMessage::url,
             ByteBufCodecs.STRING_UTF8,
             BigMegaphoneControlMessage::name,
-            ByteBufCodecs.VAR_INT,
-            BigMegaphoneControlMessage::range,
             ByteBufCodecs.VAR_INT.map(Action::byIndex, Action::ordinal),
             BigMegaphoneControlMessage::action,
             BigMegaphoneControlMessage::new
@@ -53,7 +51,7 @@ public record BigMegaphoneControlMessage(BlockPos pos, String url, String name, 
             return;
         }
 
-        megaphone.applyConfig(message.url, message.name, message.range);
+        megaphone.applyConfig(message.url, message.name);
         if (message.action == Action.START) {
             megaphone.startBroadcast();
         }
@@ -65,13 +63,12 @@ public record BigMegaphoneControlMessage(BlockPos pos, String url, String name, 
     }
 
     public enum Action {
-        SAVE,
         START,
         STOP;
 
         public static Action byIndex(int index) {
             if (index < 0 || index >= values().length) {
-                return SAVE;
+                return STOP;
             }
             return values()[index];
         }

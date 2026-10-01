@@ -1,53 +1,17 @@
 package com.github.tartaricacid.netmusic.util;
-
-import net.minecraft.util.Mth;
-
 import java.net.URI;
 import java.net.URL;
-
+import java.util.Locale;
 public final class BigMegaphoneUtil {
-    private static final String HTTP = "http";
-    private static final String HTTPS = "https";
-    private static final double START_RADIUS_RATIO = 0.8;
-    private static final String PLAY_URL = "https://apicnrapp.cnr.cn/html/play.html";
-
-    private BigMegaphoneUtil() {
-    }
-
+    private BigMegaphoneUtil() {}
     public static boolean isValidStreamUrl(String url) {
         try {
-            if (url == null || url.isBlank()) {
-                return false;
-            }
-            if (com.github.tartaricacid.netmusic.radio.RadioDirectoryApi.isStationUrl(url)) return true;
-            // 央广网的 api 链接是特例
-            if (url.startsWith(PLAY_URL)) {
-                return true;
-            }
-            URL source = URI.create(url.trim()).toURL();
-            return (HTTP.equalsIgnoreCase(source.getProtocol()) || HTTPS.equalsIgnoreCase(source.getProtocol())) && source.getHost() != null;
-        } catch (Exception e) {
-            return false;
-        }
+            if (url == null || url.isBlank()) return false;
+            URI uri = URI.create(url.trim());
+            return ("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme())) && uri.getHost() != null;
+        } catch (Exception e) { return false; }
     }
-
     public static boolean isM3u8Url(URL url) {
-        if (url == null) {
-            return false;
-        }
-        String protocol = url.getProtocol();
-        if (!HTTP.equalsIgnoreCase(protocol) && !HTTPS.equalsIgnoreCase(protocol)) {
-            return false;
-        }
-        String path = url.getPath();
-        return path != null && path.toLowerCase().endsWith(".m3u8");
-    }
-
-    public static int clampRange(int range, int maxRange) {
-        return Mth.clamp(range, 1, Math.max(1, maxRange));
-    }
-
-    public static int getStartRange(int maxRange) {
-        return maxRange;
+        return url != null && isValidStreamUrl(url.toString()) && url.getPath().toLowerCase(Locale.ROOT).endsWith(".m3u8");
     }
 }

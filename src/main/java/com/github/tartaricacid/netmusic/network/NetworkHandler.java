@@ -12,9 +12,10 @@ import net.minecraft.world.level.Level;
 
 public class NetworkHandler {
     public static void init() {
+        PayloadTypeRegistry.serverboundPlay().register(PlaybackControlMessage.TYPE, PlaybackControlMessage.STREAM_CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(PlaybackStatusMessage.TYPE, PlaybackStatusMessage.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(RadioStateMessage.TYPE, RadioStateMessage.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(MusicStopMessage.TYPE, MusicStopMessage.STREAM_CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(GetMusicListMessage.TYPE, GetMusicListMessage.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(MusicToClientMessage.TYPE, MusicToClientMessage.STREAM_CODEC);
         PayloadTypeRegistry.serverboundPlay().register(SetMusicIDMessage.TYPE, SetMusicIDMessage.STREAM_CODEC);
 

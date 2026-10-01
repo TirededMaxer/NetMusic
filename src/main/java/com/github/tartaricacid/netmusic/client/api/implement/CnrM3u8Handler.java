@@ -1,6 +1,5 @@
 package com.github.tartaricacid.netmusic.client.api.implement;
 
-import com.github.tartaricacid.netmusic.api.NetEaseMusic;
 import com.github.tartaricacid.netmusic.api.NetWorker;
 import com.github.tartaricacid.netmusic.client.api.IAudioStreamHandler;
 import com.github.tartaricacid.netmusic.util.BigMegaphoneUtil;
@@ -39,21 +38,7 @@ public class CnrM3u8Handler implements IAudioStreamHandler {
 
     @Override
     public AudioInputStream handle(URL url) throws UnsupportedAudioFileException, IOException {
-        URI m3u8Uri = getM3u8Uri(url);
-
-        Supplier<HttpRequest> playlistRequest = () -> HttpRequest.newBuilder(m3u8Uri)
-                .timeout(M3U8_TIMEOUT)
-                .header(HttpHeaders.USER_AGENT, NetEaseMusic.getUserAgent())
-                .GET().build();
-
-        Function<URI, HttpRequest> tsSegmentRequest = tsUri -> HttpRequest.newBuilder(tsUri)
-                .timeout(TS_TIMEOUT).header(HttpHeaders.USER_AGENT, NetEaseMusic.getUserAgent())
-                .GET().build();
-
-        // 获取 M3U8 网络流，并套上 5MB 缓冲 (为了支持格式嗅探)
-        final M3U8InputStream m3U8InputStream = new M3U8InputStream(NetWorker.HTTP_CLIENT, playlistRequest, tsSegmentRequest);
-        final BufferedInputStream bis = new BufferedInputStream(m3U8InputStream, 5 * 1024 * 1024);
-        return new TSAudioFileReader().getAudioInputStream(bis);
+        return new M3u8Handler().handle(getM3u8Uri(url).toURL());
     }
 
     @SuppressWarnings("all")
@@ -70,7 +55,7 @@ public class CnrM3u8Handler implements IAudioStreamHandler {
 
         try {
             String apiUrl = String.format(API, params.get(CHANNEL_ID));
-            String text = NetWorker.get(apiUrl, Map.of(HttpHeaders.USER_AGENT, NetEaseMusic.getUserAgent()));
+            String text = NetWorker.get(apiUrl, Map.of(HttpHeaders.USER_AGENT, NetWorker.USER_AGENT));
             JsonObject root = JsonParser.parseString(text).getAsJsonObject();
             String m3u8Url = root.getAsJsonObject("data")
                     .getAsJsonArray("categories").get(0).getAsJsonObject()

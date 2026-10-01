@@ -42,16 +42,16 @@ public class RadioStationScreen extends Screen {
             String needle = query.toLowerCase(Locale.ROOT);
             for (var station : stations) if ((station.name() + station.province() + station.city()).toLowerCase(Locale.ROOT).contains(needle)) result.add(stationEntry(station));
         } else if (group.isEmpty()) {
-            result.add(new Entry("总台", () -> navigate("总台", "", "")));
-            result.add(new Entry("国内地区广播", () -> navigate("国内", "", "")));
-            result.add(new Entry("国外", () -> navigate("国外", "", "")));
+            result.add(new Entry(Component.translatable("gui.netmusic.radio.national").getString(), () -> navigate("总台", "", "")));
+            result.add(new Entry(Component.translatable("gui.netmusic.radio.domestic").getString(), () -> navigate("国内", "", "")));
+            result.add(new Entry(Component.translatable("gui.netmusic.radio.foreign").getString(), () -> navigate("国外", "", "")));
         } else if (group.equals("国内") && province.isEmpty()) {
             stations.stream().filter(s -> s.group().equals("国内")).map(RadioCatalog.Station::province).distinct().sorted()
                 .forEach(p -> result.add(new Entry(p, () -> navigate("国内", p, ""))));
         } else if (group.equals("国内") && city.isEmpty()) {
-            result.add(new Entry(province + "省级广播", () -> navigate("国内", province, "省级")));
+            result.add(new Entry(Component.translatable("gui.netmusic.radio.province_level", province).getString(), () -> navigate("国内", province, "省级")));
             stations.stream().filter(s -> s.group().equals("国内") && s.province().equals(province) && !s.city().equals("省级"))
-                .map(RadioCatalog.Station::city).distinct().sorted().forEach(ct -> result.add(new Entry(province + "－" + ct, () -> navigate("国内", province, ct))));
+                .map(RadioCatalog.Station::city).distinct().sorted().forEach(ct -> result.add(new Entry(Component.translatable("gui.netmusic.radio.city_group", province, ct).getString(), () -> navigate("国内", province, ct))));
         } else {
             stations.stream().filter(s -> s.group().equals(group))
                 .filter(s -> !group.equals("国内") || (s.province().equals(province) && s.city().equals(city)))
@@ -64,15 +64,19 @@ public class RadioStationScreen extends Screen {
             addRenderableWidget(Button.builder(Component.literal(entry.label()), b -> entry.action().run())
                 .pos(left, top + 24 + (i - page * rows) * 22).size(300, 20).build());
         }
-        Button previous = Button.builder(Component.literal("◀"), b -> { page--; rebuildEntries(); }).pos(left, height - 30).size(60, 20).build();
+        Button previous = Button.builder(Component.translatable("gui.netmusic.big_megaphone.page.previous"), b -> { page--; rebuildEntries(); }).pos(left, height - 30).size(60, 20).build();
         previous.active = page > 0; addRenderableWidget(previous);
         addRenderableWidget(Button.builder(Component.translatable("gui.netmusic.big_megaphone.back"), b -> back()).pos(left + 66, height - 30).size(168, 20).build());
-        Button next = Button.builder(Component.literal("▶"), b -> { page++; rebuildEntries(); }).pos(left + 240, height - 30).size(60, 20).build();
+        Button next = Button.builder(Component.translatable("gui.netmusic.big_megaphone.page.next"), b -> { page++; rebuildEntries(); }).pos(left + 240, height - 30).size(60, 20).build();
         next.active = page < maxPage; addRenderableWidget(next);
     }
     private Entry stationEntry(RadioCatalog.Station station) {
-        String label = query.isBlank() ? station.name() : station.group() + " / " + station.province() + " / " + station.name();
+        String label = query.isBlank() ? station.name() : Component.translatable("gui.netmusic.radio.search_result", groupLabel(station.group()), station.province(), station.name()).getString();
         return new Entry(label, () -> { parent.applyStation(station.name(), station.url()); minecraft.setScreen(parent); });
+    }
+    private static String groupLabel(String group) {
+        return Component.translatable(group.equals("总台") ? "gui.netmusic.radio.national" :
+                group.equals("国内") ? "gui.netmusic.radio.domestic" : "gui.netmusic.radio.foreign").getString();
     }
     private void back() {
         if (!query.isBlank()) { query = ""; page = 0; rebuild(); }
@@ -85,8 +89,10 @@ public class RadioStationScreen extends Screen {
     @Override public boolean isPauseScreen() { return false; }
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
-        String heading = group.isEmpty() ? title.getString() : group + (province.isEmpty() ? "" : " / " + province) + (city.isEmpty() ? "" : " / " + city);
+        String heading = group.isEmpty() ? title.getString() : groupLabel(group);
+        if (!province.isEmpty()) heading = Component.translatable("gui.netmusic.radio.path", heading, province).getString();
+        if (!city.isEmpty()) heading = Component.translatable("gui.netmusic.radio.path", heading, city.equals("省级") ? Component.translatable("gui.netmusic.radio.province_category") : city).getString();
         graphics.centeredText(font, heading, width / 2, 12, 0xFFFFFFFF);
-        graphics.centeredText(font, (page + 1) + " / " + (Math.max(0, (entries.size() - 1) / rows) + 1), width / 2, height - 43, 0xFFAAAAAA);
+        graphics.centeredText(font, Component.translatable("gui.netmusic.radio.page", page + 1, Math.max(0, (entries.size() - 1) / rows) + 1), width / 2, height - 43, 0xFFAAAAAA);
     }
 }

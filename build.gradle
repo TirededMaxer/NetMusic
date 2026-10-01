@@ -146,12 +146,6 @@ dependencies {
     implementation("com.electronwill.night-config:core:3.8.0")
     implementation("com.electronwill.night-config:toml:3.8.0")
 
-    // 车万女仆: 织姬
-    // implementation("maven.modrinth:touhoulittlemaid-orihime:${project.touhoulittlemaid_orihime_version}")
-    // implementation("dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cca_version}")
-    // implementation("dev.onyxstudios.cardinal-components-api:cardinal-components-entity:${project.cca_version}")
-    // implementation("org.openjdk.nashorn:nashorn-core:15.4")
-
     implementation 'com.google.code.findbugs:jsr305:3.0.2'
 }
 

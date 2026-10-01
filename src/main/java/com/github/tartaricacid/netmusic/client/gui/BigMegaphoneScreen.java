@@ -1,15 +1,12 @@
 package com.github.tartaricacid.netmusic.client.gui;
 
 import com.github.tartaricacid.netmusic.client.network.ClientNetWorkHandler;
-import com.github.tartaricacid.netmusic.config.GeneralConfig;
-import com.github.tartaricacid.netmusic.network.NetworkHandler;
 import com.github.tartaricacid.netmusic.network.message.BigMegaphoneControlMessage;
 import com.github.tartaricacid.netmusic.tileentity.TileEntityBigMegaphone;
 import com.github.tartaricacid.netmusic.util.BigMegaphoneUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -19,7 +16,6 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.apache.commons.lang3.StringUtils;
 
@@ -33,7 +29,6 @@ public class BigMegaphoneScreen extends Screen {
 
     private EditBox urlTextField;
     private EditBox nameTextField;
-    private VolumeSlider volumeSlider;
 
     private Component tips = Component.empty();
     private boolean loadedFromBlockEntity = false;
@@ -46,25 +41,21 @@ public class BigMegaphoneScreen extends Screen {
     @Override
     protected void init() {
         this.leftPos = (this.width - WIDTH) / 2;
-        this.topPos = (this.height - 180) / 2;
+        this.topPos = (this.height - 150) / 2;
 
         this.initUrlEditBox();
         this.initNameEditBox();
-        this.initVolumeSlider(this.volumeSlider == null ? 32 : this.volumeSlider.getCurrentVolume());
 
         this.addRenderableWidget(Button.builder(Component.translatable("gui.netmusic.big_megaphone.select_station"),
                         b -> this.openStationPicker())
-                .pos(this.leftPos, this.topPos + 139).size(WIDTH, 20).build());
+                .pos(this.leftPos, this.topPos + 89).size(WIDTH, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.translatable("gui.netmusic.big_megaphone.save"),
-                        b -> this.sendAction(BigMegaphoneControlMessage.Action.SAVE))
-                .pos(this.leftPos, this.topPos + 114).size(76, 20).build());
         this.addRenderableWidget(Button.builder(Component.translatable("gui.netmusic.big_megaphone.start"),
                         b -> this.sendAction(BigMegaphoneControlMessage.Action.START))
-                .pos(this.leftPos + 82, this.topPos + 114).size(76, 20).build());
+                .pos(this.leftPos, this.topPos + 64).size(116, 20).build());
         this.addRenderableWidget(Button.builder(Component.translatable("gui.netmusic.big_megaphone.stop"),
                         b -> this.sendAction(BigMegaphoneControlMessage.Action.STOP))
-                .pos(this.leftPos + 164, this.topPos + 114).size(76, 20).build());
+                .pos(this.leftPos + 124, this.topPos + 64).size(116, 20).build());
 
         this.initFromBlockEntity();
     }
@@ -73,7 +64,7 @@ public class BigMegaphoneScreen extends Screen {
         String previousText = this.urlTextField == null ? "" : this.urlTextField.getValue();
         boolean focused = this.urlTextField != null && this.urlTextField.isFocused();
         this.urlTextField = new EditBox(this.font, this.leftPos, this.topPos + 14, WIDTH, 18,
-                Component.literal("Megaphone URL Box"));
+                Component.translatable("gui.netmusic.big_megaphone.url.accessibility"));
         this.urlTextField.setMaxLength(1024);
         this.urlTextField.setTextColor(0xFFF3EFE0);
         this.urlTextField.setFocused(focused);
@@ -85,19 +76,12 @@ public class BigMegaphoneScreen extends Screen {
         String previousText = this.nameTextField == null ? "" : this.nameTextField.getValue();
         boolean focused = this.nameTextField != null && this.nameTextField.isFocused();
         this.nameTextField = new EditBox(this.font, this.leftPos, this.topPos + 37, WIDTH, 18,
-                Component.literal("Megaphone Name Box"));
+                Component.translatable("gui.netmusic.big_megaphone.name.accessibility"));
         this.nameTextField.setMaxLength(256);
         this.nameTextField.setTextColor(0xFFF3EFE0);
         this.nameTextField.setFocused(focused);
         this.nameTextField.setValue(previousText);
         this.addRenderableWidget(this.nameTextField);
-    }
-
-    private void initVolumeSlider(int range) {
-        int maxRange = Math.max(1, 100);
-        double value = maxRange == 1 ? 0 : (double) (Mth.clamp(range, 1, maxRange) - 1) / (maxRange - 1);
-        this.volumeSlider = new VolumeSlider(this.leftPos, this.topPos + 60, WIDTH, 20, value, maxRange);
-        this.addRenderableWidget(this.volumeSlider);
     }
 
     private void openStationPicker() {
@@ -125,7 +109,6 @@ public class BigMegaphoneScreen extends Screen {
         if (blockEntity instanceof TileEntityBigMegaphone megaphone) {
             this.urlTextField.setValue(megaphone.getStreamUrl());
             this.nameTextField.setValue(megaphone.getDisplayName());
-            this.volumeSlider.setVolume(megaphone.getVolume());
             this.loadedFromBlockEntity = true;
             return;
         }
@@ -144,7 +127,7 @@ public class BigMegaphoneScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        graphics.centeredText(this.font, this.tips, this.width / 2, this.topPos + 92, 0xFFCF0000);
+        graphics.centeredText(this.font, this.tips, this.width / 2, this.topPos + 119, 0xFFCF0000);
 
         super.extractRenderState(graphics, mouseX, mouseY, a);
 
@@ -163,7 +146,6 @@ public class BigMegaphoneScreen extends Screen {
         this.tips = Component.empty();
         String url = this.urlTextField.getValue().trim();
         String name = this.nameTextField.getValue().trim();
-        int range = this.volumeSlider.getCurrentVolume();
 
         if (action != BigMegaphoneControlMessage.Action.STOP) {
             if (StringUtils.isBlank(url)) {
@@ -180,7 +162,7 @@ public class BigMegaphoneScreen extends Screen {
             }
         }
 
-        ClientNetWorkHandler.sendToServer(new BigMegaphoneControlMessage(this.blockPos, url, name, range, action));
+        ClientNetWorkHandler.sendToServer(new BigMegaphoneControlMessage(this.blockPos, url, name, action));
     }
 
     @Override
@@ -213,39 +195,4 @@ public class BigMegaphoneScreen extends Screen {
         return false;
     }
 
-    private static class VolumeSlider extends AbstractSliderButton {
-        private final int maxRange;
-
-        protected VolumeSlider(int x, int y, int width, int height, double value, int maxRange) {
-            super(x, y, width, height, Component.empty(), value);
-            this.maxRange = maxRange;
-            this.updateMessage();
-        }
-
-        @Override
-        protected void updateMessage() {
-            this.setMessage(Component.translatable("gui.netmusic.big_megaphone.volume", this.getCurrentVolume()));
-        }
-
-        @Override
-        protected void applyValue() {
-            this.updateMessage();
-        }
-
-        public int getCurrentVolume() {
-            if (this.maxRange <= 1) {
-                return 1;
-            }
-            return Mth.clamp((int) Math.round(1 + this.value * (this.maxRange - 1)), 1, this.maxRange);
-        }
-
-        public void setVolume(int range) {
-            if (this.maxRange <= 1) {
-                this.value = 0;
-            } else {
-                this.value = (double) (Mth.clamp(range, 1, this.maxRange) - 1) / (double) (this.maxRange - 1);
-            }
-            this.updateMessage();
-        }
-    }
 }

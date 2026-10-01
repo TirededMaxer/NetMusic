@@ -7,6 +7,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 public class ServerReceiverRegistry {
     public static void register() {
+        registerReceiver(com.github.tartaricacid.netmusic.network.message.PlaybackControlMessage.TYPE,
+                com.github.tartaricacid.netmusic.network.message.PlaybackControlMessage::handle);
         registerReceiver(SetMusicIDMessage.TYPE, SetMusicIDMessage::handle);
         registerReceiver(BigMegaphoneControlMessage.TYPE, BigMegaphoneControlMessage::handle);
     }

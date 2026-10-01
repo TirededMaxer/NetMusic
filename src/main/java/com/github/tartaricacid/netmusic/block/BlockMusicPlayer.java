@@ -116,7 +116,7 @@ public class BlockMusicPlayer extends HorizontalDirectionalBlock implements Enti
             return;
         }
         if (signal) {
-            if (player.isPlay()) {
+            if (player.isPlay() || player.isResolving()) {
                 player.setPlay(false);
                 player.setSignal(true);
                 player.setChanged();

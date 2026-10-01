@@ -94,6 +94,11 @@ public class TileEntityMusicPlayer extends BlockEntity implements MusicPlayerInv
         return getItems().get(slot);
     }
 
+    public boolean isResolving() { return resolving; }
+    public void resumePlayback(int remaining) {
+        registered = true; resolving = false; isPlay = true; currentTime = remaining; setChanged();
+    }
+
     public boolean isPlay() {
         return isPlay;
     }
@@ -102,6 +107,7 @@ public class TileEntityMusicPlayer extends BlockEntity implements MusicPlayerInv
         isPlay = play;
         if (!play && level instanceof ServerLevel serverLevel) {
             resolving = false;
+            currentTime = 0;
             com.github.tartaricacid.netmusic.playback.WorldPlaybackManager.get(serverLevel.getServer()).release(this);
         }
     }
@@ -120,7 +126,6 @@ public class TileEntityMusicPlayer extends BlockEntity implements MusicPlayerInv
     public void setPlayToClient(ItemMusicCD.SongInfo info) {
         if (!(level instanceof ServerLevel sl) || info == null) return;
         var manager = com.github.tartaricacid.netmusic.playback.WorldPlaybackManager.get(sl.getServer());
-        if (!manager.musicEnabled()) return;
         long token = manager.claim(this);
         reservation = token;
         resolving = true;
@@ -181,7 +186,7 @@ public class TileEntityMusicPlayer extends BlockEntity implements MusicPlayerInv
             if (te.isPlay) {
                 te.isPlay = false;
                 ItemMusicCD.SongInfo saved = ItemMusicCD.getSongInfo(te.getItem(0));
-                if (saved != null) te.setPlayToClient(saved);
+                if (saved != null && manager.musicEnabled()) te.setPlayToClient(saved);
             }
         }
         if (te.resolving) return;

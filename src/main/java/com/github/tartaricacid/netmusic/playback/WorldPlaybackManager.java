@@ -60,9 +60,22 @@ public final class WorldPlaybackManager {
             catch (AtomicMoveNotSupportedException e) { Files.move(temp, path(), StandardCopyOption.REPLACE_EXISTING); }
         } catch (IOException e) { NetMusic.LOGGER.error("Cannot save world radio state", e); }
     }
-    public void register(TileEntityMusicPlayer player) { players.add(player); }
+    public void register(TileEntityMusicPlayer player) {
+        players.removeIf(p -> p.isRemoved() && p != lease.owner());
+        players.add(player);
+        var old = lease.owner();
+        if (song != null && old != null && old != player && old.getLevel() == player.getLevel() &&
+                old.getBlockPos().equals(player.getBlockPos())) {
+            lease.claim(player);
+            int elapsed = Math.max(0, server.getTickCount() - songStarted);
+            player.resumePlayback(Math.max(1, song.timeSecond() * 20 + 64 - elapsed));
+            players.remove(old);
+        }
+    }
     public boolean musicEnabled() { return state.musicEnabled; }
+    public boolean radioEnabled() { return state.radioEnabled; }
     public long claim(TileEntityMusicPlayer player) {
+        if (!state.musicEnabled) { state.musicEnabled = true; save(); }
         TileEntityMusicPlayer previous = lease.owner();
         lease.clear();
         song = null; musicAudience.clear();
@@ -76,7 +89,15 @@ public final class WorldPlaybackManager {
     }
     private void updateMusicAudience() {
         var owner = lease.owner();
-        if (owner != null && (owner.isRemoved() || !owner.isPlay()) && song != null) { release(owner); return; }
+        if (owner != null && song != null) {
+            var level = owner.getLevel();
+            boolean invalid = level == null || !owner.isPlay();
+            if (!invalid && level.hasChunkAt(owner.getBlockPos()) && level.getBlockEntity(owner.getBlockPos()) != owner) {
+                if (!(level.getBlockEntity(owner.getBlockPos()) instanceof TileEntityMusicPlayer)) invalid = true;
+            }
+            boolean unloadedEnd = owner.isRemoved() && server.getTickCount() - songStarted > song.timeSecond() * 20 + 64;
+            if (invalid || unloadedEnd) { release(owner); return; }
+        }
         if (song == null || owner == null) return;
         int elapsed = Math.max(0, server.getTickCount() - songStarted);
         Set<UUID> current = new HashSet<>();
@@ -96,12 +117,19 @@ public final class WorldPlaybackManager {
     public void release(TileEntityMusicPlayer player) {
         if (lease.owner() == player) {
             lease.release(player);
+            state.musicEnabled = false; save();
             song = null; musicAudience.clear();
             NetworkHandler.broadcast(server, new MusicStopMessage());
         }
     }
     public void remove(TileEntityMusicPlayer player) { release(player); players.remove(player); }
     public boolean setMusicEnabled(boolean enabled, ServerPlayer sender) {
+        if (enabled && lease.owner() == null) {
+            players.removeIf(p -> p.isRemoved() || p.getLevel() == null);
+            boolean available = players.stream().anyMatch(p -> ItemMusicCD.getSongInfo(p.getItem(0)) != null &&
+                    (sender == null || p.getLevel() == sender.level()));
+            if (!available) return false;
+        }
         state.musicEnabled = enabled;
         if (!enabled) {
             TileEntityMusicPlayer owner = lease.owner();
@@ -124,7 +152,7 @@ public final class WorldPlaybackManager {
         String dimension = dimension(horn.getLevel());
         long pos = horn.getBlockPos().asLong();
         if (state.horns.stream().noneMatch(h -> h.dimension.equals(dimension) && h.pos == pos)) {
-            state.horns.add(new Horn(dimension, pos, horn.getVolume()));
+            state.horns.add(new Horn(dimension, pos));
             save();
         }
         horn.syncWorld(state.url, state.name, state.radioEnabled);
@@ -135,13 +163,12 @@ public final class WorldPlaybackManager {
         state.horns.removeIf(h -> h.dimension.equals(dimension) && h.pos == horn.getBlockPos().asLong());
         save(); tick();
     }
-    public void configure(TileEntityBigMegaphone horn, String url, String name, int volume) {
+    public void configure(TileEntityBigMegaphone horn, String url, String name) {
         boolean stationChanged = !state.url.equals(url) || !state.name.equals(name);
         state.url = url; state.name = name;
         String dimension = dimension(horn.getLevel());
         state.horns.removeIf(h -> h.dimension.equals(dimension) && h.pos == horn.getBlockPos().asLong());
-        state.horns.add(new Horn(dimension, horn.getBlockPos().asLong(), volume));
-        horn.setVolume(volume);
+        state.horns.add(new Horn(dimension, horn.getBlockPos().asLong()));
         if (stationChanged) radioSession++;
         syncHorns(); save(); tick();
     }
@@ -170,8 +197,9 @@ public final class WorldPlaybackManager {
                     BlockPos pos = BlockPos.of(horn.pos);
                     // Validate when the chunk is available without loading it merely for audio.
                     if (player.level().hasChunkAt(pos) && !(player.level().getBlockEntity(pos) instanceof TileEntityBigMegaphone)) continue;
-                    float gain = PlaybackRules.gain(player.distanceToSqr(Vec3.atCenterOf(pos)), horn.volume);
-                    if (gain > bestGain) { best = horn; bestGain = gain; }
+                    float gain = PlaybackRules.gain(player.distanceToSqr(Vec3.atCenterOf(pos)));
+                    float combined = PlaybackRules.strongest(bestGain, gain);
+                    if (combined > bestGain) { best = horn; bestGain = combined; }
                 }
             }
             RadioStateMessage message = new RadioStateMessage(radioSession, best == null ? "" : state.url,
@@ -185,5 +213,5 @@ public final class WorldPlaybackManager {
         public boolean radioEnabled, musicEnabled = true;
         public List<Horn> horns = new ArrayList<>();
     }
-    public record Horn(String dimension, long pos, int volume) {}
+    public record Horn(String dimension, long pos) {}
 }
