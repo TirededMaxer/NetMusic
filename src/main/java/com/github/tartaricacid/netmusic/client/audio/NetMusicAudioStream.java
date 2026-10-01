@@ -43,10 +43,7 @@ public class NetMusicAudioStream implements AudioStream {
         AudioInputStream targetInputStream = AudioSystem.getAudioInputStream(targetFormat, originalInputStream);
 
         targetFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, originalFormat.getSampleRate(), 16,
-                1, 2, originalFormat.getSampleRate(), false); else {
-            targetFormat = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, originalFormat.getSampleRate(), 16,
-                    2, 4, originalFormat.getSampleRate(), false);
-        }
+                1, 2, originalFormat.getSampleRate(), false);
 
         this.stream = AudioSystem.getAudioInputStream(targetFormat, targetInputStream);
         this.frameSize = stream.getFormat().getFrameSize();
