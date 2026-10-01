@@ -27,7 +27,7 @@ public final class AdtsAudioStream {
             this.input = input;
             try {
                 demux = new ADTSDemultiplexer(input);
-                decoder = Decoder.create(demux.getDecoderInfo());
+                decoder = Decoder.create(new net.sourceforge.jaad.aac.MonoDecoderConfig(demux.getDecoderInfo()));
                 samples = new SampleBuffer(decoder.getAudioFormat());
                 samples.setBigEndian(false);
                 decode();

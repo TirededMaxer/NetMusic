@@ -27,8 +27,10 @@ class AudioDecodeProbe {
     private static void decode(AudioInputStream encoded) throws Exception {
         try (encoded) {
             AudioFormat source = encoded.getFormat();
+            AudioFormat decoded = new AudioFormat(source.getSampleRate(), 16, source.getChannels(), true, false);
+            AudioInputStream nativePcm = AudioSystem.getAudioInputStream(decoded, encoded);
             AudioFormat format = new AudioFormat(source.getSampleRate(), 16, 1, true, false);
-            try (var pcm = AudioSystem.getAudioInputStream(format, encoded)) {
+            try (var pcm = AudioSystem.getAudioInputStream(format, nativePcm)) {
                 byte[] buffer = new byte[format.getFrameSize() * 2048];
                 long count = 0;
                 long limit = (long) (format.getFrameRate() * format.getFrameSize() * 16);
