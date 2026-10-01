@@ -21,7 +21,6 @@ public class InitItems {
 
     public static Item CD_BURNER = register("cd_burner", ItemCDBurner::new);
 
-    public static Item COMPUTER = register("computer", ItemComputer::new);
 
     public static Item BIG_MEGAPHONE = register("big_megaphone", ItemBigMegaphone::new);
 
@@ -37,7 +36,6 @@ public class InitItems {
             .displayItems((parameters, output) -> {
                 output.accept(new ItemStack(MUSIC_PLAYER));
                 output.accept(new ItemStack(CD_BURNER));
-                output.accept(new ItemStack(COMPUTER));
                 output.accept(new ItemStack(BIG_MEGAPHONE));
                 output.accept(new ItemStack(InitItems.MUSIC_CD));
                 for (ItemMusicCD.SongInfo info : MusicListManage.SONGS) {

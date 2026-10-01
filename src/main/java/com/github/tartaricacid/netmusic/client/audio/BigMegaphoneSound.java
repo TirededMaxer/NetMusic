@@ -26,7 +26,7 @@ import java.util.concurrent.CompletionException;
 
 public class BigMegaphoneSound extends AbstractTickableSoundInstance {
     private final URL streamUrl;
-    private final BlockPos pos;
+    private BlockPos pos;
     private final long sessionId;
 
     public BigMegaphoneSound(BlockPos pos, long sessionId, URL streamUrl, float volume) {
@@ -39,12 +39,14 @@ public class BigMegaphoneSound extends AbstractTickableSoundInstance {
         this.z = pos.getZ() + 0.5f;
         // 当 volume 大于 1 时，此时控制的就是播放范围，距离为 16 * volume
         this.volume = volume;
+        this.attenuation = SoundInstance.Attenuation.NONE;
+        this.relative = true;
     }
 
     @Override
     public void tick() {
         ClientLevel level = Minecraft.getInstance().level;
-        if (level == null || level.getBlockEntity(this.pos) == null) {
+        if (level == null) {
             this.stop();
         } else {
             if (level.getGameTime() % 8 == 0) {
@@ -58,6 +60,11 @@ public class BigMegaphoneSound extends AbstractTickableSoundInstance {
                 }
             }
         }
+    }
+
+    public void updateEmitter(BlockPos pos, float gain) {
+        this.pos = pos; this.volume = Math.clamp(gain, 0f, 1f);
+        this.x = pos.getX() + 0.5; this.y = pos.getY() + 0.5; this.z = pos.getZ() + 0.5;
     }
 
     public void forceStop() {

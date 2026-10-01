@@ -48,14 +48,13 @@ public record BigMegaphoneControlMessage(BlockPos pos, String url, String name, 
             return;
         }
 
+        if (message.url.length() > 2048 || message.name.length() > 256) return;
         if (!BigMegaphoneUtil.isValidStreamUrl(message.url) || StringUtils.isBlank(message.name)) {
             return;
         }
 
-        boolean changed = megaphone.applyConfig(message.url, message.name, message.range);
+        megaphone.applyConfig(message.url, message.name, message.range);
         if (message.action == Action.START) {
-            megaphone.startBroadcast();
-        } else if (changed && megaphone.isBroadcasting()) {
             megaphone.startBroadcast();
         }
     }

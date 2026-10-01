@@ -9,7 +9,6 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.network.chat.Component;
 
-import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -21,7 +20,11 @@ import java.util.function.Function;
 public final class MusicPlayManager {
     public static final String ERROR_404 = "http://music.163.com/404";
     public static final String MUSIC_163_URL = "https://music.163.com/";
-    private static final String LOCAL_FILE_PROTOCOL = "file";
+    private static SoundInstance current;
+    public static void stopCurrent() {
+        if (current != null) Minecraft.getInstance().getSoundManager().stop(current);
+        current = null;
+    }
 
     public static void play(String url, String songName, Function<URL, SoundInstance> sound) {
         Optional<String> finalUrl = getFinalUrl(url);
@@ -41,7 +44,9 @@ public final class MusicPlayManager {
         try {
             final URL urlFinal = new URI(url).toURL();
             Minecraft.getInstance().submit(() -> {
+                stopCurrent();
                 SoundInstance instance = sound.apply(urlFinal);
+                current = instance;
                 Minecraft.getInstance().getSoundManager().play(instance);
                 Minecraft.getInstance().gui.setNowPlaying(Component.literal(songName));
             });
@@ -53,15 +58,10 @@ public final class MusicPlayManager {
     public static Optional<String> getFinalUrl(String url) {
         try {
             URL urlFinal = URI.create(url).toURL();
-            // 如果是本地文件
-            if (urlFinal.getProtocol().equals(LOCAL_FILE_PROTOCOL)) {
-                File file = new File(urlFinal.toURI());
-                if (!file.exists()) {
-                    NetMusic.LOGGER.info("File not found: {}", url);
-                    return Optional.empty();
-                }
+            if (!urlFinal.getProtocol().equalsIgnoreCase("http") && !urlFinal.getProtocol().equalsIgnoreCase("https")) {
+                return Optional.empty();
             }
-        } catch (URISyntaxException | MalformedURLException e) {
+        } catch (IllegalArgumentException | MalformedURLException e) {
             NetMusic.LOGGER.error("Malformed URL: {}", url, e);
             return Optional.empty();
         }

@@ -38,6 +38,9 @@ public class TileEntityMusicPlayer extends BlockEntity implements MusicPlayerInv
     private final NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
 
     private boolean isPlay = false;
+    private boolean registered;
+    private boolean resolving;
+    private long reservation;
     private int currentTime;
     private boolean hasSignal = false;
 
@@ -97,26 +100,41 @@ public class TileEntityMusicPlayer extends BlockEntity implements MusicPlayerInv
 
     public void setPlay(boolean play) {
         isPlay = play;
+        if (!play && level instanceof ServerLevel serverLevel) {
+            resolving = false;
+            com.github.tartaricacid.netmusic.playback.WorldPlaybackManager.get(serverLevel.getServer()).release(this);
+        }
+    }
+
+    public void stopPlayback() {
+        resolving = false; isPlay = false; currentTime = 0;
+        setChanged();
+    }
+
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        if (level instanceof ServerLevel sl) com.github.tartaricacid.netmusic.playback.WorldPlaybackManager.get(sl.getServer()).remove(this);
+        super.preRemoveSideEffects(pos, state);
     }
 
     public void setPlayToClient(ItemMusicCD.SongInfo info) {
-        if (level instanceof ServerLevel serverLevel) {
-            MinecraftServer server = serverLevel.getServer();
-            ItemMusicCD.SongInfo clone = info.clone();
-            MusicPlayResolverManager.resolve(clone).thenAcceptAsync(resolved -> {
-                this.setCurrentTime(resolved.songTime * 20 + 64);
-                this.isPlay = true;
-                this.setChanged();
-
-                String rawUrl = info.songUrl;
-                String url = resolved.songUrl;
-                MusicToClientMessage msg = new MusicToClientMessage(
-                        worldPosition, url, rawUrl,
-                        resolved.songTime, resolved.songName
-                );
-                NetworkHandler.sendToNearBy(level, worldPosition, msg);
-            }, server);
-        }
+        if (!(level instanceof ServerLevel sl) || info == null) return;
+        var manager = com.github.tartaricacid.netmusic.playback.WorldPlaybackManager.get(sl.getServer());
+        if (!manager.musicEnabled()) return;
+        long token = manager.claim(this);
+        reservation = token;
+        resolving = true;
+        ItemMusicCD.SongInfo original = info.clone();
+        MusicPlayResolverManager.resolve(info.clone()).whenCompleteAsync((resolved, error) -> {
+            if (!manager.owns(this, token) || isRemoved() || !original.equals(ItemMusicCD.getSongInfo(getItem(0)))) return;
+            resolving = false;
+            if (error != null || resolved == null) { stopPlayback(); manager.release(this); return; }
+            this.setCurrentTime(resolved.songTime * 20 + 64);
+            this.isPlay = true;
+            this.setChanged();
+            MusicToClientMessage msg = new MusicToClientMessage(worldPosition, resolved.songUrl, original.songUrl, resolved.songTime, resolved.songName);
+            NetworkHandler.sendToNearBy(level, worldPosition, msg);
+        }, sl.getServer());
     }
 
     @Override
@@ -156,10 +174,22 @@ public class TileEntityMusicPlayer extends BlockEntity implements MusicPlayerInv
     }
 
     public static void tick(Level level, BlockPos blockPos, BlockState blockState, TileEntityMusicPlayer te) {
+        var manager = com.github.tartaricacid.netmusic.playback.WorldPlaybackManager.get(((ServerLevel) level).getServer());
+        manager.register(te);
+        if (!te.registered) {
+            te.registered = true;
+            if (te.isPlay) {
+                te.isPlay = false;
+                ItemMusicCD.SongInfo saved = ItemMusicCD.getSongInfo(te.getItem(0));
+                if (saved != null) te.setPlayToClient(saved);
+            }
+        }
+        if (te.resolving) return;
         te.tickTime();
         if (0 < te.getCurrentTime() && te.getCurrentTime() < 16 && te.getCurrentTime() % 5 == 0) {
             if (blockState.getValue(CYCLE_DISABLE)) {
                 te.setPlay(false);
+                te.setCurrentTime(0);
                 te.setChanged();
             } else {
                 ItemStack stackInSlot = te.getItem(0);

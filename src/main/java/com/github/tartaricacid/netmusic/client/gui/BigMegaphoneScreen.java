@@ -33,7 +33,7 @@ public class BigMegaphoneScreen extends Screen {
 
     private EditBox urlTextField;
     private EditBox nameTextField;
-    private RangeSlider rangeSlider;
+    private VolumeSlider volumeSlider;
 
     private Component tips = Component.empty();
     private boolean loadedFromBlockEntity = false;
@@ -50,10 +50,10 @@ public class BigMegaphoneScreen extends Screen {
 
         this.initUrlEditBox();
         this.initNameEditBox();
-        this.initRangeSlider(this.rangeSlider == null ? 32 : this.rangeSlider.getCurrentRange());
+        this.initVolumeSlider(this.volumeSlider == null ? 32 : this.volumeSlider.getCurrentVolume());
 
-        this.addRenderableWidget(Button.builder(Component.translatable("gui.netmusic.big_megaphone.presets"),
-                        b -> this.openPresetPicker())
+        this.addRenderableWidget(Button.builder(Component.translatable("gui.netmusic.big_megaphone.select_station"),
+                        b -> this.openStationPicker())
                 .pos(this.leftPos, this.topPos + 139).size(WIDTH, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.translatable("gui.netmusic.big_megaphone.save"),
@@ -93,15 +93,15 @@ public class BigMegaphoneScreen extends Screen {
         this.addRenderableWidget(this.nameTextField);
     }
 
-    private void initRangeSlider(int range) {
-        int maxRange = Math.max(1, GeneralConfig.BIG_MEGAPHONE_MAX_RANGE.get());
+    private void initVolumeSlider(int range) {
+        int maxRange = Math.max(1, 100);
         double value = maxRange == 1 ? 0 : (double) (Mth.clamp(range, 1, maxRange) - 1) / (maxRange - 1);
-        this.rangeSlider = new RangeSlider(this.leftPos, this.topPos + 60, WIDTH, 20, value, maxRange);
-        this.addRenderableWidget(this.rangeSlider);
+        this.volumeSlider = new VolumeSlider(this.leftPos, this.topPos + 60, WIDTH, 20, value, maxRange);
+        this.addRenderableWidget(this.volumeSlider);
     }
 
-    private void openPresetPicker() {
-        this.minecraft.setScreen(new BigMegaphonePresetPickerScreen(this));
+    private void openStationPicker() {
+        this.minecraft.setScreen(new RadioStationScreen(this));
     }
 
     @Override
@@ -125,14 +125,14 @@ public class BigMegaphoneScreen extends Screen {
         if (blockEntity instanceof TileEntityBigMegaphone megaphone) {
             this.urlTextField.setValue(megaphone.getStreamUrl());
             this.nameTextField.setValue(megaphone.getDisplayName());
-            this.rangeSlider.setRange(megaphone.getMaxRange());
+            this.volumeSlider.setVolume(megaphone.getVolume());
             this.loadedFromBlockEntity = true;
             return;
         }
         this.onClose();
     }
 
-    public void applyPresetStation(String name, String url) {
+    public void applyStation(String name, String url) {
         this.tips = Component.empty();
         if (this.urlTextField != null) {
             this.urlTextField.setValue(url);
@@ -163,7 +163,7 @@ public class BigMegaphoneScreen extends Screen {
         this.tips = Component.empty();
         String url = this.urlTextField.getValue().trim();
         String name = this.nameTextField.getValue().trim();
-        int range = this.rangeSlider.getCurrentRange();
+        int range = this.volumeSlider.getCurrentVolume();
 
         if (action != BigMegaphoneControlMessage.Action.STOP) {
             if (StringUtils.isBlank(url)) {
@@ -213,10 +213,10 @@ public class BigMegaphoneScreen extends Screen {
         return false;
     }
 
-    private static class RangeSlider extends AbstractSliderButton {
+    private static class VolumeSlider extends AbstractSliderButton {
         private final int maxRange;
 
-        protected RangeSlider(int x, int y, int width, int height, double value, int maxRange) {
+        protected VolumeSlider(int x, int y, int width, int height, double value, int maxRange) {
             super(x, y, width, height, Component.empty(), value);
             this.maxRange = maxRange;
             this.updateMessage();
@@ -224,7 +224,7 @@ public class BigMegaphoneScreen extends Screen {
 
         @Override
         protected void updateMessage() {
-            this.setMessage(Component.translatable("gui.netmusic.big_megaphone.range", this.getCurrentRange()));
+            this.setMessage(Component.translatable("gui.netmusic.big_megaphone.volume", this.getCurrentVolume()));
         }
 
         @Override
@@ -232,14 +232,14 @@ public class BigMegaphoneScreen extends Screen {
             this.updateMessage();
         }
 
-        public int getCurrentRange() {
+        public int getCurrentVolume() {
             if (this.maxRange <= 1) {
                 return 1;
             }
             return Mth.clamp((int) Math.round(1 + this.value * (this.maxRange - 1)), 1, this.maxRange);
         }
 
-        public void setRange(int range) {
+        public void setVolume(int range) {
             if (this.maxRange <= 1) {
                 this.value = 0;
             } else {

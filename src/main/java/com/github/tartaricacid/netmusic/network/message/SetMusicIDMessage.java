@@ -2,7 +2,6 @@ package com.github.tartaricacid.netmusic.network.message;
 
 import com.github.tartaricacid.netmusic.NetMusic;
 import com.github.tartaricacid.netmusic.inventory.CDBurnerMenu;
-import com.github.tartaricacid.netmusic.inventory.ComputerMenu;
 import com.github.tartaricacid.netmusic.item.ItemMusicCD;
 import io.netty.buffer.ByteBuf;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -28,12 +27,10 @@ public class SetMusicIDMessage implements CustomPacketPayload {
     public static void handle(SetMusicIDMessage message, ServerPlayNetworking.Context context) {
         context.server().execute(() -> {
             ServerPlayer player = context.player();
+            if (message.song.songUrl == null || !message.song.songUrl.startsWith("https://music.163.com/")) return;
             if (player.containerMenu instanceof CDBurnerMenu menu) {
                 menu.setSongInfo(message.song);
                 return;
-            }
-            if (player.containerMenu instanceof ComputerMenu menu) {
-                menu.setSongInfo(message.song);
             }
         });
     }

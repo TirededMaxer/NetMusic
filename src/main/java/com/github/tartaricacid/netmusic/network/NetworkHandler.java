@@ -12,18 +12,22 @@ import net.minecraft.world.level.Level;
 
 public class NetworkHandler {
     public static void init() {
+        PayloadTypeRegistry.clientboundPlay().register(RadioStateMessage.TYPE, RadioStateMessage.STREAM_CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(MusicStopMessage.TYPE, MusicStopMessage.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(GetMusicListMessage.TYPE, GetMusicListMessage.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(MusicToClientMessage.TYPE, MusicToClientMessage.STREAM_CODEC);
         PayloadTypeRegistry.serverboundPlay().register(SetMusicIDMessage.TYPE, SetMusicIDMessage.STREAM_CODEC);
 
         PayloadTypeRegistry.serverboundPlay().register(BigMegaphoneControlMessage.TYPE, BigMegaphoneControlMessage.STREAM_CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(BigMegaphoneStartMessage.TYPE, BigMegaphoneStartMessage.STREAM_CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(BigMegaphoneStopMessage.TYPE, BigMegaphoneStopMessage.STREAM_CODEC);
+    }
+
+    public static void broadcast(net.minecraft.server.MinecraftServer server, CustomPacketPayload message) {
+        server.getPlayerList().getPlayers().forEach(player -> ServerPlayNetworking.send(player, message));
     }
 
     public static void sendToNearBy(Level world, BlockPos pos, CustomPacketPayload message) {
         if (world instanceof ServerLevel serverWorld) {
-            PlayerLookup.around(serverWorld, pos, 96)
+            PlayerLookup.around(serverWorld, pos, 1024)
                     .forEach(p -> ServerPlayNetworking.send(p, message));
         }
     }

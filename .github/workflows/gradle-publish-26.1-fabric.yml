@@ -1,60 +1,74 @@
-name: Gradle Package 26.1 Fabric
-
+name: Build 26.1.2 Fabric Broadcast Edition
 on:
   workflow_dispatch:
   push:
-    branches:
-      - "26.1-fabric"
-    paths:
-      - 'src/main/**'
-
+    branches: ["26.1-fabric"]
+permissions:
+  contents: write
+concurrency:
+  group: netmusic-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 35
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
         with:
           java-version: '25'
-          distribution: 'microsoft'
+          distribution: 'temurin'
           cache: 'gradle'
-
-      - name: Build with Gradle
+      - name: Generate official station directory
+        run: python3 scripts/generate_radio_catalog.py
+      - name: Build and test
         run: |
-          chmod +x ./gradlew
-          ./gradlew build --build-cache --parallel
-
-      - name: Rename Build Artifacts
+          chmod +x gradlew
+          ./gradlew build --no-daemon --stacktrace
+      - name: Inspect playable artifact
         run: |
-          cd ./build/libs/
-          # 找到以 -all.jar 结尾的文件，将其更名为包含 snapshot 的名称
-          for f in *-all.jar; do
-            mv "$f" "${f%-all.jar}-snapshot.jar"
-          done
-          # 查看一下结果，方便在日志里调试
-          ls -R
-
-      - name: Create timestamp
-        id: create_timestamp
-        run: echo "timestamp=$(date '+%Y-%m-%d-%H-%M-%S')" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - name: Send file to Release
-        uses: softprops/action-gh-release@v2
-        if: success()
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, zipfile
+          jars = list(Path('build/libs').glob('*-all.jar'))
+          assert len(jars) == 1, jars
+          with zipfile.ZipFile(jars[0]) as jar:
+              names = jar.namelist()
+              assert 'com/github/tartaricacid/netmusic/playback/WorldPlaybackManager.class' in names
+              assert 'com/github/tartaricacid/netmusic/client/command/ClientCommands.class' in names
+              assert not any('Computer' in n or 'LocalFileHandler' in n or 'Preset' in n or '/computer.' in n for n in names)
+              stations = json.loads(jar.read('assets/netmusic/radio_stations.json'))
+              assert len(stations) > 500
+              metadata = json.loads(jar.read('fabric.mod.json'))
+              assert metadata['depends']['minecraft'] == '~26.1.2'
+              print(jars[0], len(stations), 'stations')
+          PY
+          cp build/radio-directory-report.json build/libs/
+          cp README.md build/libs/README.txt
+          cd build/libs
+          sha256sum *-all.jar *-sources.jar radio-directory-report.json README.txt > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
         with:
-          tag_name: snapshot-${{ steps.create_timestamp.outputs.timestamp }}
-          generate_release_notes: true
-          body: |
-            
-            ${{ github.event.head_commit.message }}
-
-          draft: false
-          prerelease: true
-          files: |
-            build/libs/*-snapshot.jar
+          name: netmusic-26.1.2-fabric
+          path: |
+            build/libs/*-all.jar
             build/libs/*-sources.jar
+            build/libs/SHA256SUMS.txt
+            build/libs/radio-directory-report.json
+            build/libs/README.txt
+      - name: Draft GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="broadcast-26.1.2-${{ github.run_number }}"
+          gh release create "$TAG" --target "${{ github.sha }}" --draft --title "NetMusic 26.1.2 Fabric — Broadcast Edition" --notes-file README.md build/libs/*-all.jar build/libs/*-sources.jar build/libs/SHA256SUMS.txt build/libs/radio-directory-report.json build/libs/README.txt
+          echo "Release remains draft until its uploaded asset sizes and digests are verified."
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-reports
+          path: |
+            build/reports/tests/
+            build/test-results/
+            build/radio-directory-report.json

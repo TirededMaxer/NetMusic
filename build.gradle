@@ -109,6 +109,9 @@ configurations {
 }
 
 dependencies {
+    testImplementation platform('org.junit:junit-bom:5.12.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     // Fabric Loader
@@ -203,3 +206,4 @@ jar {
         rename { "${it}_${project.base.archivesName.get()}" }
     }
 }
+test { useJUnitPlatform() }

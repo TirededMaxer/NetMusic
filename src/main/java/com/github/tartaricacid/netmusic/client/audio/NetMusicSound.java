@@ -45,7 +45,9 @@ public class NetMusicSound extends AbstractTickableSoundInstance {
         this.y = pos.getY() + 0.5f;
         this.z = pos.getZ() + 0.5f;
         this.tickTimes = timeSecond * 20;
-        this.volume = 4.0f;
+        this.volume = 1.0f;
+        this.attenuation = SoundInstance.Attenuation.NONE;
+        this.relative = true;
         this.tick = 0;
         this.pos = pos;
         this.lyricRecord = lyricRecord;
@@ -55,8 +57,10 @@ public class NetMusicSound extends AbstractTickableSoundInstance {
     public void tick() {
         Level world = Minecraft.getInstance().level;
         if (world == null) {
-            return;
+            this.stop(); return;
         }
+        var player = Minecraft.getInstance().player;
+        this.volume = player == null ? 0 : com.github.tartaricacid.netmusic.playback.PlaybackRules.gain(player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(pos)), 100);
         tick++;
         if (tick > tickTimes + 50) {
             BlockEntity te = world.getBlockEntity(pos);
@@ -90,8 +94,6 @@ public class NetMusicSound extends AbstractTickableSoundInstance {
             } else {
                 musicPlay.lyricRecord = lyricRecord;
             }
-        } else {
-            this.stop();
         }
     }
 

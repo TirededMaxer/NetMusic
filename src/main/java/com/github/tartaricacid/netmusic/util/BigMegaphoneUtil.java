@@ -19,11 +19,13 @@ public final class BigMegaphoneUtil {
             if (url == null || url.isBlank()) {
                 return false;
             }
+            if (com.github.tartaricacid.netmusic.radio.RadioDirectoryApi.isStationUrl(url)) return true;
             // 央广网的 api 链接是特例
             if (url.startsWith(PLAY_URL)) {
                 return true;
             }
-            return isM3u8Url(URI.create(url.trim()).toURL());
+            URL source = URI.create(url.trim()).toURL();
+            return (HTTP.equalsIgnoreCase(source.getProtocol()) || HTTPS.equalsIgnoreCase(source.getProtocol())) && source.getHost() != null;
         } catch (Exception e) {
             return false;
         }
@@ -46,6 +48,6 @@ public final class BigMegaphoneUtil {
     }
 
     public static int getStartRange(int maxRange) {
-        return Math.max(1, Mth.floor(maxRange * START_RADIUS_RATIO));
+        return maxRange;
     }
 }

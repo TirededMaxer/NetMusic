@@ -1,7 +1,6 @@
 package com.github.tartaricacid.netmusic.client;
 
 import com.github.tartaricacid.netmusic.NetMusic;
-import com.github.tartaricacid.netmusic.client.gui.BigMegaphonePresetManager;
 import com.github.tartaricacid.netmusic.client.init.ClientReceiverRegistry;
 import com.github.tartaricacid.netmusic.client.init.InitContainerGui;
 import com.github.tartaricacid.netmusic.client.init.InitEvents;
@@ -14,12 +13,15 @@ import net.minecraft.server.packs.PackType;
 public class NetMusicClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
-        ResourceLoader.get(PackType.CLIENT_RESOURCES).registerReloadListener(
-                Identifier.fromNamespaceAndPath(NetMusic.MOD_ID, "broadcasting_presets"), new BigMegaphonePresetManager());
+        com.github.tartaricacid.netmusic.client.command.ClientCommands.init();
 
         InitContainerGui.init();
         InitModel.init();
         InitEvents.init();
         ClientReceiverRegistry.register();
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            com.github.tartaricacid.netmusic.client.audio.MusicPlayManager.stopCurrent();
+            com.github.tartaricacid.netmusic.client.audio.BigMegaphoneClientManager.clearAll();
+        });
     }
 }

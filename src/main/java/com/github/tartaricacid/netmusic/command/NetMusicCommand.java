@@ -41,11 +41,28 @@ public class NetMusicCommand {
         RequiredArgumentBuilder<CommandSourceStack, Long> songId = Commands.argument(SONG_ID, LongArgumentType.longArg());
         RequiredArgumentBuilder<CommandSourceStack, Long> djId = Commands.argument(DJ_SONG_ID, LongArgumentType.longArg());
 
+        for (String type : new String[] {"music_player", "jukebox", "唱片机", "big_megaphone", "megaphone", "大喇叭"}) {
+            boolean radio = type.equals("big_megaphone") || type.equals("megaphone") || type.equals("大喇叭");
+            root.then(Commands.literal(type)
+                .then(Commands.literal("on").executes(ctx -> switchPlayback(ctx, radio, true)))
+                .then(Commands.literal("off").executes(ctx -> switchPlayback(ctx, radio, false))));
+        }
         root.then(get163List.then(songListId.executes(NetMusicCommand::getSongList)));
         root.then(get163Song.then(songId.executes(NetMusicCommand::getSong)));
         root.then(reload.executes(NetMusicCommand::reload));
         root.then(getDJSong.then(djId.executes(NetMusicCommand::getDJSong)));
         return root;
+    }
+
+    private static int switchPlayback(CommandContext<CommandSourceStack> context, boolean radio, boolean enabled) {
+        var manager = com.github.tartaricacid.netmusic.playback.WorldPlaybackManager.get(context.getSource().getServer());
+        boolean success = radio ? manager.setRadioEnabled(enabled) : manager.setMusicEnabled(enabled, context.getSource().getPlayer());
+        if (!success) {
+            context.getSource().sendFailure(Component.translatable(radio ? "command.netmusic.no_station" : "command.netmusic.no_disc"));
+            return 0;
+        }
+        context.getSource().sendSuccess(() -> Component.translatable("command.netmusic.switch", radio ? "大喇叭" : "唱片机", enabled ? "on" : "off"), true);
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int getSong(CommandContext<CommandSourceStack> context) {

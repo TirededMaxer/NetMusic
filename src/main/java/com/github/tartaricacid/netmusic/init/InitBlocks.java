@@ -3,7 +3,6 @@ package com.github.tartaricacid.netmusic.init;
 import com.github.tartaricacid.netmusic.NetMusic;
 import com.github.tartaricacid.netmusic.block.BlockBigMegaphone;
 import com.github.tartaricacid.netmusic.block.BlockCDBurner;
-import com.github.tartaricacid.netmusic.block.BlockComputer;
 import com.github.tartaricacid.netmusic.block.BlockMusicPlayer;
 import com.github.tartaricacid.netmusic.tileentity.TileEntityBigMegaphone;
 import com.github.tartaricacid.netmusic.tileentity.TileEntityMusicPlayer;
@@ -20,7 +19,6 @@ import java.util.function.Supplier;
 public class InitBlocks {
     public static final Block MUSIC_PLAYER = register("music_player", BlockMusicPlayer::new);
     public static final Block CD_BURNER = register("cd_burner", BlockCDBurner::new);
-    public static final Block COMPUTER = register("computer", BlockComputer::new);
     public static final Block BIG_MEGAPHONE = register("big_megaphone", BlockBigMegaphone::new);
 
     public static final BlockEntityType<TileEntityMusicPlayer> MUSIC_PLAYER_TE = registerBlockEntity("music_player",

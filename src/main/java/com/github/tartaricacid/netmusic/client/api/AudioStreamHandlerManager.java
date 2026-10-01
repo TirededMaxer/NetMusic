@@ -17,10 +17,10 @@ public final class AudioStreamHandlerManager {
 
     public static void init() {
         // 注册自己的 handler
+        registerHandler(new RadioDirectoryStreamHandler());
         registerHandler(new CnrM3u8Handler());
         registerHandler(new M3u8Handler());
         registerHandler(new NetEaseHttpHandler());
-        registerHandler(new LocalFileHandler());
         registerHandler(new DirectHttpHandler());
 
         // 按优先级排序

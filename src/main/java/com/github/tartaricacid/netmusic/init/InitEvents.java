@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 
 public class InitEvents {
     public static void init() {
+        com.github.tartaricacid.netmusic.playback.WorldPlaybackManager.init();
         AllModLoadedEvent.register(event -> MusicPlayResolverManager.init());
     }
 

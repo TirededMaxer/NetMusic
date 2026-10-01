@@ -2,7 +2,6 @@ package com.github.tartaricacid.netmusic.init;
 
 import com.github.tartaricacid.netmusic.NetMusic;
 import com.github.tartaricacid.netmusic.inventory.CDBurnerMenu;
-import com.github.tartaricacid.netmusic.inventory.ComputerMenu;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -11,7 +10,6 @@ import net.minecraft.world.inventory.MenuType;
 public class InitContainer {
     public static void init() {
         register("cd_burner", CDBurnerMenu.TYPE);
-        register("computer", ComputerMenu.TYPE);
     }
 
     public static void register(String id, MenuType<?> type) {

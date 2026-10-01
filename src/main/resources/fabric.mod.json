@@ -14,7 +14,7 @@
   ],
   "contact": {
     "homepage": "https://www.curseforge.com/minecraft/mc-mods/net-music",
-    "sources": "https://github.com/TartaricAcid/NetMusic"
+    "sources": "https://github.com/TirededMaxer/NetMusic"
   },
   "license": "MIT",
   "icon": "assets/netmusic/icon.png",
@@ -27,7 +27,7 @@
       "com.github.tartaricacid.netmusic.client.NetMusicClient"
     ],
     "server": [
-        "com.github.tartaricacid.netmusic.NetMusicServer"
+      "com.github.tartaricacid.netmusic.NetMusicServer"
     ],
     "modmenu": [
       "com.github.tartaricacid.netmusic.compat.modmenu.ModMenuApiImpl"
@@ -38,7 +38,11 @@
     "minecraft": "~26.1.2",
     "java": ">=25",
     "fabric-api": "*",
-    "forgeconfigapiport": "*"
+    "forgeconfigapiport": "*",
+    "cloth-config": "*"
   },
-  "accessWidener" : "netmusic.accesswidener"
+  "accessWidener": "netmusic.accesswidener",
+  "suggests": {
+    "modmenu": "*"
+  }
 }
