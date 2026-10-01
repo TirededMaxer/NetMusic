@@ -31,6 +31,9 @@ public final class WorldPlaybackManager {
     private final Set<TileEntityBigMegaphone> loadedHorns = Collections.newSetFromMap(new IdentityHashMap<>());
     private final Map<UUID, RadioStateMessage> lastRadio = new HashMap<>();
     private State state;
+    private com.github.tartaricacid.netmusic.network.message.MusicToClientMessage song;
+    private int songStarted;
+    private final Set<UUID> musicAudience = new HashSet<>();
     private long radioSession = System.currentTimeMillis();
 
     private WorldPlaybackManager(MinecraftServer server) {
@@ -62,14 +65,38 @@ public final class WorldPlaybackManager {
     public long claim(TileEntityMusicPlayer player) {
         TileEntityMusicPlayer previous = lease.owner();
         lease.clear();
+        song = null; musicAudience.clear();
         if (previous != null) previous.stopPlayback();
         NetworkHandler.broadcast(server, new MusicStopMessage());
         return lease.claim(player);
+    }
+    public void publish(TileEntityMusicPlayer player, long token, com.github.tartaricacid.netmusic.network.message.MusicToClientMessage message) {
+        if (!owns(player, token)) return;
+        song = message; songStarted = server.getTickCount(); musicAudience.clear(); updateMusicAudience();
+    }
+    private void updateMusicAudience() {
+        var owner = lease.owner();
+        if (owner != null && (owner.isRemoved() || !owner.isPlay()) && song != null) { release(owner); return; }
+        if (song == null || owner == null) return;
+        int elapsed = Math.max(0, server.getTickCount() - songStarted);
+        Set<UUID> current = new HashSet<>();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            boolean audible = owner.getLevel() == player.level() &&
+                player.distanceToSqr(Vec3.atCenterOf(owner.getBlockPos())) < (double) PlaybackRules.RANGE * PlaybackRules.RANGE;
+            if (audible) {
+                current.add(player.getUUID());
+                if (musicAudience.add(player.getUUID()))
+                    NetworkHandler.sendToClientPlayer(new com.github.tartaricacid.netmusic.network.message.MusicToClientMessage(
+                        song.pos(), song.url(), song.rawUrl(), song.timeSecond(), song.songName(), elapsed), player);
+            } else if (musicAudience.remove(player.getUUID())) NetworkHandler.sendToClientPlayer(new MusicStopMessage(), player);
+        }
+        musicAudience.retainAll(current);
     }
     public boolean owns(TileEntityMusicPlayer player, long token) { return state.musicEnabled && lease.owns(player, token); }
     public void release(TileEntityMusicPlayer player) {
         if (lease.owner() == player) {
             lease.release(player);
+            song = null; musicAudience.clear();
             NetworkHandler.broadcast(server, new MusicStopMessage());
         }
     }
@@ -79,6 +106,7 @@ public final class WorldPlaybackManager {
         if (!enabled) {
             TileEntityMusicPlayer owner = lease.owner();
             lease.clear();
+            song = null; musicAudience.clear();
             if (owner != null) owner.stopPlayback();
             NetworkHandler.broadcast(server, new MusicStopMessage());
         } else if (lease.owner() == null) {
@@ -131,6 +159,7 @@ public final class WorldPlaybackManager {
     private static String dimension(net.minecraft.world.level.Level level) { return level.dimension().identifier().toString(); }
     private void tick() {
         if (server.getTickCount() % 10 != 0 && !lastRadio.isEmpty()) return;
+        updateMusicAudience();
         Set<UUID> connected = new HashSet<>();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             connected.add(player.getUUID());

@@ -2,7 +2,7 @@ package com.github.tartaricacid.netmusic.client.command;
 
 import com.github.tartaricacid.netmusic.compat.cloth.MenuIntegration;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal;
 
 public final class ClientCommands {
     public static void init() {

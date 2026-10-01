@@ -17,7 +17,7 @@ import static com.github.tartaricacid.netmusic.client.audio.MusicPlayManager.MUS
 public class MusicToClientMessageClient {
     private static final Pattern PATTERN = Pattern.compile("^.*?\\?id=(\\d+)\\.mp3$");
 
-    public static void onHandle(MusicToClientMessage message) {
+    public static void onHandle(MusicToClientMessage message, long request) {
         // 使用数组方便在 lambda 表达式中修改
         LyricRecord[] record = new LyricRecord[1];
 
@@ -36,9 +36,10 @@ public class MusicToClientMessageClient {
         }
 
         MusicPlayManager.play(
+                request,
                 message.url(),
                 message.songName(),
-                url -> new NetMusicSound(message.pos(), url, message.timeSecond(), record[0])
+                url -> new NetMusicSound(message.pos(), url, message.timeSecond(), record[0], message.elapsedTicks())
         );
     }
 }

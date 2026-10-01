@@ -1,18 +1,11 @@
 package com.github.tartaricacid.netmusic.client.audio;
 
 import com.github.tartaricacid.netmusic.NetMusic;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.ChatFormatting;
+import net.fabricmc.api.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.network.chat.Component;
-
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.*;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -21,51 +14,34 @@ public final class MusicPlayManager {
     public static final String ERROR_404 = "http://music.163.com/404";
     public static final String MUSIC_163_URL = "https://music.163.com/";
     private static SoundInstance current;
+    private static volatile long generation;
+    public static long beginRequest() { stopCurrent(); return generation; }
+    public static boolean isCurrent(long request) { return request == generation; }
     public static void stopCurrent() {
+        generation++;
         if (current != null) Minecraft.getInstance().getSoundManager().stop(current);
         current = null;
     }
-
-    public static void play(String url, String songName, Function<URL, SoundInstance> sound) {
-        Optional<String> finalUrl = getFinalUrl(url);
-
-        if (finalUrl.isPresent()) {
-            playMusic(finalUrl.get(), songName, sound);
-        } else {
-            LocalPlayer player = Minecraft.getInstance().player;
-            if (player != null) {
-                player.sendSystemMessage(Component.translatable("message.netmusic.music_player.404", url).withStyle(ChatFormatting.RED));
-            }
-            NetMusic.LOGGER.info("Music not found: {}", url);
-        }
-    }
-
-    private static void playMusic(String url, String songName, Function<URL, SoundInstance> sound) {
+    public static void play(long request, String url, String name, Function<URL, SoundInstance> factory) {
+        Optional<String> source = getFinalUrl(url);
+        if (source.isEmpty()) return;
         try {
-            final URL urlFinal = new URI(url).toURL();
-            Minecraft.getInstance().submit(() -> {
-                stopCurrent();
-                SoundInstance instance = sound.apply(urlFinal);
-                current = instance;
-                Minecraft.getInstance().getSoundManager().play(instance);
-                Minecraft.getInstance().gui.setNowPlaying(Component.literal(songName));
+            URL parsed = URI.create(source.get()).toURL();
+            Minecraft.getInstance().execute(() -> {
+                if (!isCurrent(request) || Minecraft.getInstance().level == null) return;
+                if (current != null) Minecraft.getInstance().getSoundManager().stop(current);
+                current = factory.apply(parsed);
+                Minecraft.getInstance().getSoundManager().play(current);
+                Minecraft.getInstance().gui.setNowPlaying(Component.literal(name));
             });
-        } catch (MalformedURLException | URISyntaxException e) {
-            NetMusic.LOGGER.error("Malformed URL: {}", url, e);
-        }
+        } catch (Exception e) { NetMusic.LOGGER.error("Malformed music URL", e); }
     }
-
     public static Optional<String> getFinalUrl(String url) {
         try {
-            URL urlFinal = URI.create(url).toURL();
-            if (!urlFinal.getProtocol().equalsIgnoreCase("http") && !urlFinal.getProtocol().equalsIgnoreCase("https")) {
-                return Optional.empty();
-            }
-        } catch (IllegalArgumentException | MalformedURLException e) {
-            NetMusic.LOGGER.error("Malformed URL: {}", url, e);
-            return Optional.empty();
-        }
-
-        return Optional.of(url);
+            URI source = URI.create(url);
+            if ((source.getScheme().equalsIgnoreCase("http") || source.getScheme().equalsIgnoreCase("https")) && source.getHost() != null)
+                return Optional.of(url);
+        } catch (Exception ignored) {}
+        return Optional.empty();
     }
 }

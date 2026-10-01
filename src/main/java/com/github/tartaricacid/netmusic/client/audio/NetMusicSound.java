@@ -37,8 +37,9 @@ public class NetMusicSound extends AbstractTickableSoundInstance {
     private final BlockPos pos;
     private final @Nullable LyricRecord lyricRecord;
     private int tick;
+    private final int elapsedTicks;
 
-    public NetMusicSound(BlockPos pos, URL songUrl, int timeSecond, @Nullable LyricRecord lyricRecord) {
+    public NetMusicSound(BlockPos pos, URL songUrl, int timeSecond, @Nullable LyricRecord lyricRecord, int elapsedTicks) {
         super(InitSounds.NET_MUSIC, SoundSource.RECORDS, SoundInstance.createUnseededRandom());
         this.songUrl = songUrl;
         this.x = pos.getX() + 0.5f;
@@ -48,7 +49,9 @@ public class NetMusicSound extends AbstractTickableSoundInstance {
         this.volume = 1.0f;
         this.attenuation = SoundInstance.Attenuation.NONE;
         this.relative = true;
-        this.tick = 0;
+        this.x = this.y = this.z = 0;
+        this.elapsedTicks = Math.clamp(elapsedTicks, 0, Math.max(0, this.tickTimes));
+        this.tick = this.elapsedTicks;
         this.pos = pos;
         this.lyricRecord = lyricRecord;
     }
@@ -73,9 +76,9 @@ public class NetMusicSound extends AbstractTickableSoundInstance {
                 for (int i = 0; i < 2; i++) {
                     RandomSource random = world.getRandom();
                     world.addParticle(ParticleTypes.NOTE,
-                            x - 0.5f + random.nextDouble(),
-                            y + random.nextDouble() + 1,
-                            z - 0.5f + random.nextDouble(),
+                            pos.getX() + random.nextDouble(),
+                            pos.getY() + random.nextDouble() + 1,
+                            pos.getZ() + random.nextDouble(),
                             random.nextGaussian(), random.nextGaussian(), random.nextInt(3));
                 }
             }
@@ -108,7 +111,7 @@ public class NetMusicSound extends AbstractTickableSoundInstance {
     public CompletableFuture<AudioStream> getAudioStream(SoundBufferLibrary loader, Identifier id, boolean repeatInstantly) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return new NetMusicAudioStream(this.songUrl);
+                return new NetMusicAudioStream(this.songUrl, this.elapsedTicks);
             } catch (IOException | UnsupportedAudioFileException e) {
                 NetMusic.LOGGER.error("Failed to create audio stream for URL: {}", songUrl, e);
                 Minecraft.getInstance().submit(this::errorStop);

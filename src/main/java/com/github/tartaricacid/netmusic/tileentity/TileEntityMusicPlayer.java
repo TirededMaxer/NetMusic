@@ -132,8 +132,8 @@ public class TileEntityMusicPlayer extends BlockEntity implements MusicPlayerInv
             this.setCurrentTime(resolved.songTime * 20 + 64);
             this.isPlay = true;
             this.setChanged();
-            MusicToClientMessage msg = new MusicToClientMessage(worldPosition, resolved.songUrl, original.songUrl, resolved.songTime, resolved.songName);
-            NetworkHandler.sendToNearBy(level, worldPosition, msg);
+            MusicToClientMessage msg = new MusicToClientMessage(worldPosition, resolved.songUrl, original.songUrl, resolved.songTime, resolved.songName, 0);
+            manager.publish(this, token, msg);
         }, sl.getServer());
     }
 

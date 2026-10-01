@@ -35,7 +35,9 @@ public class NetMusicAudioStream implements AudioStream {
 
     private volatile Throwable failed;
 
-    public NetMusicAudioStream(URL url) throws UnsupportedAudioFileException, IOException {
+    public NetMusicAudioStream(URL url) throws UnsupportedAudioFileException, IOException { this(url, 0); }
+
+    public NetMusicAudioStream(URL url, int elapsedTicks) throws UnsupportedAudioFileException, IOException {
         AudioInputStream originalInputStream = AudioStreamHandlerManager.handle(url);
         AudioFormat originalFormat = originalInputStream.getFormat();
         AudioFormat targetFormat = getTargetPCMAudioFormat(originalFormat);
@@ -53,6 +55,10 @@ public class NetMusicAudioStream implements AudioStream {
         this.frameSize = stream.getFormat().getFrameSize();
         this.frame = new byte[frameSize];
         this.streamingBufferSize = calculateBufferSize(stream.getFormat(), 1);
+        if (elapsedTicks > 0) {
+            long frames = (long) (stream.getFormat().getFrameRate() * Math.max(0, elapsedTicks) / 20.0);
+            try { stream.skipNBytes(frames * frameSize); } catch (IOException e) { stream.close(); throw e; }
+        }
         pumpBuffers(4);
     }
 

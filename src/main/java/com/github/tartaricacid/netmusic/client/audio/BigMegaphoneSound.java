@@ -41,6 +41,7 @@ public class BigMegaphoneSound extends AbstractTickableSoundInstance {
         this.volume = volume;
         this.attenuation = SoundInstance.Attenuation.NONE;
         this.relative = true;
+        this.x = this.y = this.z = 0;
     }
 
     @Override
@@ -53,9 +54,9 @@ public class BigMegaphoneSound extends AbstractTickableSoundInstance {
                 RandomSource random = level.getRandom();
                 for (int i = 0; i < 2; i++) {
                     level.addParticle(ParticleTypes.NOTE,
-                            x - 0.5f + random.nextDouble() * 2,
-                            y + random.nextDouble() * 1.5,
-                            z - 0.5f + random.nextDouble() * 2,
+                            pos.getX() + random.nextDouble() * 2,
+                            pos.getY() + random.nextDouble() * 1.5,
+                            pos.getZ() + random.nextDouble() * 2,
                             random.nextGaussian(), random.nextGaussian(), random.nextInt(3));
                 }
             }
@@ -64,7 +65,7 @@ public class BigMegaphoneSound extends AbstractTickableSoundInstance {
 
     public void updateEmitter(BlockPos pos, float gain) {
         this.pos = pos; this.volume = Math.clamp(gain, 0f, 1f);
-        this.x = pos.getX() + 0.5; this.y = pos.getY() + 0.5; this.z = pos.getZ() + 0.5;
+        this.x = this.y = this.z = 0;
     }
 
     public void forceStop() {
