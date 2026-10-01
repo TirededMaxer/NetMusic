@@ -46,16 +46,25 @@ def main():
     jar = next(Path("build/libs").glob("*-all.jar"))
     with zipfile.ZipFile(jar) as archive:
         reader = next(name[:-6].replace("/", ".") for name in archive.namelist() if name.endswith("/TSAudioFileReader.class"))
+    logging_jars = list((Path.home() / '.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api').glob('**/*.jar'))
+    classpath = ':'.join([str(jar)] + [str(path) for path in logging_jars[:1]])
     records = []
+    failures = []
     for index, (name, url) in enumerate(probes):
         data = hls_sample(url) if ".m3u8" in url else fetch(url)[0]
         path = output / (str(index) + ".audio")
         path.write_bytes(data)
-        result = subprocess.run(["java", "--class-path", str(jar), "scripts/AudioDecodeProbe.java", str(path), reader],
-                                check=True, capture_output=True, text=True, timeout=60)
+        result = subprocess.run(["java", "--class-path", classpath, "scripts/AudioDecodeProbe.java", str(path), reader],
+                                check=False, capture_output=True, text=True, timeout=60)
+        if result.returncode:
+            print(name, result.stdout, result.stderr, flush=True)
+            failures.append(name)
+            records.append({'name': name, 'error': result.stderr})
+            continue
         record = {"name": name, "encoded_bytes": len(data), "decoder": result.stdout.strip()}
         records.append(record)
         print(json.dumps(record, ensure_ascii=False), flush=True)
     Path("build/radio-audio-report.json").write_text(json.dumps(records, ensure_ascii=False, indent=2), encoding="utf-8")
+    assert not failures, "Packaged audio decoding failures: " + str(failures)
 if __name__ == "__main__":
     main()
