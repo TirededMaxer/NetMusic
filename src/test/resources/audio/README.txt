@@ -1,0 +1,1 @@
+test-tone.mp3 is an original generated 440 Hz sine tone, 5 seconds, 44100 Hz, stereo, encoded by FFmpeg/libmp3lame at 64 kbps. It is a deterministic offline decoder fixture and contains no copyrighted music.

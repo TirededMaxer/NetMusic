@@ -53,7 +53,10 @@ Release 附带 radio-directory-report.json，记录目录数量、补充来源�
 
 ## 构建与验证
 
-所有源码提交、编译与测试均通过 GitHub 完成，本地不构建。
+开发以本地仓库为准：先在本地修改、复现问题、运行测试并构建，通过后提交并 push 到 GitHub。现有 GitHub Actions 工作流保留，继续作为额外验证和 Release 打包。
+使用 Java 25，在 IDEA 中将项目 SDK 与 Gradle JVM 都设为 Java 25。运行 `./gradlew build` 构建，产物位于 `build/libs/`。
+仓库已包含电台目录快照，直接本地构建会将其打包。需要更新目录时先运行 `python3 scripts/generate_radio_catalog.py`，再重新构建。
+运行 `./gradlew verifyMusicPlayback` 可通过完整唱片机音频链路检查歌曲 2085501870；可用 `-PmusicUrl=歌曲链接` 指定其他现有链接。正常单元测试使用本地生成的 MP3 音调，不依赖网易云网络。
 GitHub Actions 生成电台目录，运行播放策略、歌词时间点、HLS 解析及界面/语言检查，检查全部总台广播的单声道解码，并用正式 JAR 的 HLS 处理器实际连接中国之声及音乐之声。
 音频报告中的 network_unavailable 表示该直播源在 GitHub runner 所在网络无法访问，和解码错误分别记录。
 这些检查不替代 Minecraft 客户端内的界面、联机和移动覆盖实测。

@@ -27,3 +27,6 @@ runs/
 logs/
 
 .ref
+
+# Local JDK and dependency cache
+.tooling/

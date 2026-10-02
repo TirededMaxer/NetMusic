@@ -201,3 +201,12 @@ jar {
     }
 }
 test { useJUnitPlatform() }
+
+tasks.register('verifyMusicPlayback', JavaExec) {
+    group = 'verification'
+    description = 'Read a real song through the complete client audio pipeline (network required).'
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.github.tartaricacid.netmusic.client.audio.MusicPlaybackProbe'
+    args providers.gradleProperty('musicUrl').getOrElse('https://music.163.com/song/media/outer/url?id=2085501870.mp3')
+}

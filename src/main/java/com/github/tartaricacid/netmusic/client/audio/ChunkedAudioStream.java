@@ -1,7 +1,7 @@
 package com.github.tartaricacid.netmusic.client.audio;
 
 import com.github.tartaricacid.netmusic.NetMusic;
-import com.github.tartaricacid.netmusic.api.NetWorker;
+import com.github.tartaricacid.netmusic.api.AudioHttpTransport;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -24,6 +24,7 @@ public class ChunkedAudioStream extends InputStream {
 
     private InputStream currentStream;
     private long currentStart;
+    private boolean closed;
 
     public ChunkedAudioStream(Function<Long, HttpRequest> request) throws IOException {
         this.request = request;
@@ -35,19 +36,27 @@ public class ChunkedAudioStream extends InputStream {
     private InputStream openChunk(long start) throws IOException {
         HttpRequest httpRequest = this.request.apply(start);
         URI uri = httpRequest.uri();
-        HttpResponse<InputStream> response = NetWorker.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
+        HttpResponse<InputStream> response = AudioHttpTransport.open(httpRequest);
 
         int statusCode = response.statusCode();
         if (statusCode != HTTP_OK && statusCode != HTTP_PARTIAL) {
+            response.body().close();
             throw new IOException("Audio not found at %s: %d".formatted(uri, statusCode));
         }
 
         // 确保返回值不为 null
-        return Optional.ofNullable(response.body())
+        InputStream body = Optional.ofNullable(response.body())
                 .orElseThrow(() -> new IOException("Audio not found at %s: empty response body".formatted(uri)));
+        // Some servers ignore Range. Discard already-read bytes before resuming a full response.
+        if (start > 0 && statusCode == HTTP_OK) {
+            try { body.skipNBytes(start); }
+            catch (IOException error) { body.close(); throw error; }
+        }
+        return body;
     }
 
     private InputStream getCurrentStream() throws IOException {
+        if (closed) throw new IOException("Audio stream closed");
         if (currentStream == null) {
             currentStream = openChunk(currentStart);
         }
@@ -84,7 +93,7 @@ public class ChunkedAudioStream extends InputStream {
     public int read() throws IOException {
         // 尝试读取数据，如果失败则重试最多 3 次
         int byteRead = tryRead(3);
-        currentStart += byteRead;
+        if (byteRead >= 0) currentStart++;
         return byteRead;
     }
 
@@ -92,7 +101,7 @@ public class ChunkedAudioStream extends InputStream {
     public int read(byte[] b, int off, int len) throws IOException {
         // 尝试读取数据，如果失败则重试最多 3 次
         int byteRead = tryRead(b, off, len, 3);
-        currentStart += byteRead;
+        if (byteRead > 0) currentStart += byteRead;
         return byteRead;
     }
 
@@ -106,6 +115,7 @@ public class ChunkedAudioStream extends InputStream {
 
     @Override
     public void close() throws IOException {
+        closed = true;
         clearCurrentStream();
         super.close();
     }
