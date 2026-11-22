@@ -112,9 +112,9 @@ public class MusicPlayerRenderer implements BlockEntityRenderer<TileEntityMusicP
         matrixStack.pushPose();
         matrixStack.scale(0.75f, 0.75f, 0.75f);
         matrixStack.translate(0.5 / 0.75, 1.5, 0.5 / 0.75);
-        matrixStack.mulPose(Axis.YP.rotationDegrees(180 - state.facing.get2DDataValue() * 90));
-        matrixStack.mulPose(Axis.ZP.rotationDegrees(180));
-        submitNode.submitModel(model, state, matrixStack, TEXTURE, state.lightCoords,
+        matrixStack.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(180 - state.facing.get2DDataValue() * 90)));
+        matrixStack.mulPose(new org.joml.Matrix4f().rotation(Axis.ZP.rotationDegrees(180)));
+        com.github.tartaricacid.netmusic.client.RenderCompat.submitModel(submitNode, model, state, matrixStack, TEXTURE, state.lightCoords,
                 OverlayTexture.NO_OVERLAY, 0, state.breakProgress);
         matrixStack.popPose();
     }
@@ -134,8 +134,8 @@ public class MusicPlayerRenderer implements BlockEntityRenderer<TileEntityMusicP
 
         poseStack.pushPose();
         poseStack.translate(0.5, 1.625, 0.5);
-        poseStack.mulPose(Axis.YN.rotationDegrees(camera.yRot));
-        poseStack.mulPose(Axis.XN.rotationDegrees(-camera.xRot));
+        poseStack.mulPose(new org.joml.Matrix4f().rotation(Axis.YN.rotationDegrees(camera.yRot)));
+        poseStack.mulPose(new org.joml.Matrix4f().rotation(Axis.XN.rotationDegrees(-camera.xRot)));
         poseStack.scale(-0.025F, -0.025F, -0.025F);
 
         float opacity = Minecraft.getInstance().options.getBackgroundOpacity(0.25F);

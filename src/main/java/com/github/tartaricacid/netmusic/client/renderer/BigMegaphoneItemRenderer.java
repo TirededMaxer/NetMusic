@@ -28,7 +28,7 @@ public class BigMegaphoneItemRenderer implements NoDataSpecialModelRenderer {
 
     @Override
     public void submit(PoseStack poseStack, SubmitNodeCollector submitNode, int light, int overlay, boolean hasFoil, int outlineColor) {
-        submitNode.submitModel(this.model, Unit.INSTANCE, poseStack, TEXTURE_OFF, light, overlay, 0, null);
+        com.github.tartaricacid.netmusic.client.RenderCompat.submitModel(submitNode, this.model, Unit.INSTANCE, poseStack, TEXTURE_OFF, light, overlay, 0, null);
     }
 
     public record Unbaked() implements NoDataSpecialModelRenderer.Unbaked {

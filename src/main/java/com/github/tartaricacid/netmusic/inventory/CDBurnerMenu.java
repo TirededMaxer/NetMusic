@@ -92,9 +92,7 @@ public class CDBurnerMenu extends AbstractContainerMenu {
 
     private static void giveItemToPlayer(Player player, ItemStack stack, int preferredSlot) {
         if (!stack.isEmpty()) {
-            if (!player.getInventory().add(stack)) {
-                player.drop(stack, false);
-            }
+            player.getInventory().placeItemBackInInventory(stack);
         }
     }
 

@@ -43,9 +43,9 @@ public class BigMegaphoneRenderer implements BlockEntityRenderer<TileEntityBigMe
     public void submit(BigMegaphoneRenderState state, PoseStack poseStack, SubmitNodeCollector submitNode, CameraRenderState camera) {
         poseStack.pushPose();
         poseStack.translate(0.5, 1.5, 0.5);
-        poseStack.mulPose(Axis.YP.rotationDegrees(state.facing.get2DDataValue() * 90));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(180));
-        submitNode.submitModel(model, state, poseStack, state.broadcasting ? TEXTURE_ON : TEXTURE_OFF,
+        poseStack.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(state.facing.get2DDataValue() * 90)));
+        poseStack.mulPose(new org.joml.Matrix4f().rotation(Axis.ZP.rotationDegrees(180)));
+        com.github.tartaricacid.netmusic.client.RenderCompat.submitModel(submitNode, model, state, poseStack, state.broadcasting ? TEXTURE_ON : TEXTURE_OFF,
                 state.lightCoords, OverlayTexture.NO_OVERLAY, 0, state.breakProgress);
         poseStack.popPose();
     }

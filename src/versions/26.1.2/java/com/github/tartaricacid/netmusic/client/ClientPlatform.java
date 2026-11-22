@@ -10,5 +10,6 @@ public final class ClientPlatform {
     public static void setScreen(Screen screen) { Minecraft.getInstance().setScreen(screen); }
     public static Screen screen() { return Minecraft.getInstance().screen; }
     public static void overlay(Component text, boolean animate) { Minecraft.getInstance().gui.setOverlayMessage(text, animate); }
+    public static void deferSubtitles() { Minecraft.getInstance().gui.extractDeferredSubtitles(); }
     public static void nowPlaying(Component text) { Minecraft.getInstance().gui.setNowPlaying(text); }
 }
