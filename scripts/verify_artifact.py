@@ -2,10 +2,16 @@
 import json
 import sys
 import zipfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 target = sys.argv[1]
 assert target in json.loads(Path('versions.json').read_text())
+results = [ET.parse(p).getroot() for p in (Path('build') / target / 'test-results/test').glob('TEST-*.xml')]
+assert results, 'Missing test results'
+assert sum(int(r.attrib['tests']) for r in results) >= 17
+assert not any(int(r.attrib['failures']) or int(r.attrib['errors']) for r in results)
+print('Passed tests:', sum(int(r.attrib['tests']) for r in results))
 jars = list((Path('build') / target / 'libs').glob('*-all.jar'))
 assert len(jars) == 1, jars
 with zipfile.ZipFile(jars[0]) as jar:

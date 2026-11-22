@@ -14,14 +14,16 @@ import org.jetbrains.annotations.NotNull;
 
 public class CDBurnerMenu extends AbstractContainerMenu {
     public static final MenuType<@NotNull CDBurnerMenu> TYPE = new MenuType<>(CDBurnerMenu::new, FeatureFlags.VANILLA_SET);
-    private final Slot input = new Slot(new SimpleContainer(1), 0, 147, 14) {
+    private final SimpleContainer inputContainer = new SimpleContainer(1);
+    private final SimpleContainer outputContainer = new SimpleContainer(1);
+    private final Slot input = new Slot(inputContainer, 0, 147, 14) {
         @Override
         public boolean mayPlace(ItemStack stack) {
             return stack.getItem() == InitItems.MUSIC_CD;
         }
     };
 
-    private final Slot output = new Slot(new SimpleContainer(1), 0, 147, 67) {
+    private final Slot output = new Slot(outputContainer, 0, 147, 67) {
         @Override
         public boolean mayPlace(ItemStack stack) {
             // 输出栏只能取出不能放入
@@ -86,14 +88,8 @@ public class CDBurnerMenu extends AbstractContainerMenu {
     @Override
     public void removed(Player player) {
         super.removed(player);
-        giveItemToPlayer(player, input.getItem(), 0);
-        giveItemToPlayer(player, output.getItem(), 1);
-    }
-
-    private static void giveItemToPlayer(Player player, ItemStack stack, int preferredSlot) {
-        if (!stack.isEmpty()) {
-            player.getInventory().placeItemBackInInventory(stack);
-        }
+        clearContainer(player, inputContainer);
+        clearContainer(player, outputContainer);
     }
 
     public void setSongInfo(ItemMusicCD.SongInfo setSongInfo) {
