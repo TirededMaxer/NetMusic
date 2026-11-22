@@ -15,7 +15,10 @@ def overrides = fileTree(versionSources).matching { include '**/*.java' }.files.
     versionSources.toPath().relativize(it.toPath()).toString().replace('\\', '/')
 }
 sourceSets.main.java.setSrcDirs([])
-sourceSets.main.java.source(fileTree('src/main/java') { exclude overrides })
+def sharedJava = objects.sourceDirectorySet('sharedJava', 'Shared NetMusic Java sources')
+sharedJava.srcDir('src/main/java')
+sharedJava.exclude(overrides)
+sourceSets.main.java.source(sharedJava)
 sourceSets.main.java.srcDir(versionSources)
 
 base {
