@@ -1,4 +1,5 @@
 package com.github.tartaricacid.netmusic.client.gui;
+import com.github.tartaricacid.netmusic.client.ClientPlatform;
 
 import com.github.tartaricacid.netmusic.tileentity.TileEntityBigMegaphone;
 import net.minecraft.client.Minecraft;
@@ -11,7 +12,7 @@ public class BigMegaphoneScreenProxy {
     public static void open(BlockPos blockPos) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level != null && minecraft.level.getBlockEntity(blockPos) instanceof TileEntityBigMegaphone) {
-            minecraft.setScreen(new BigMegaphoneScreen(blockPos));
+            ClientPlatform.setScreen(new BigMegaphoneScreen(blockPos));
         }
     }
 }

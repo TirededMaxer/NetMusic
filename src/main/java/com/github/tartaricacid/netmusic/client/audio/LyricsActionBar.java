@@ -1,4 +1,5 @@
 package com.github.tartaricacid.netmusic.client.audio;
+import com.github.tartaricacid.netmusic.client.ClientPlatform;
 import com.github.tartaricacid.netmusic.api.lyric.*;
 import com.github.tartaricacid.netmusic.client.event.ConfigEvent;
 import com.github.tartaricacid.netmusic.config.GeneralConfig;
@@ -19,12 +20,12 @@ public final class LyricsActionBar {
         Component second = Component.literal(translated).withStyle(style -> style.withColor(ConfigEvent.PLAYER_TRANSLATED_COLOR & 0xFFFFFF));
         Component line = original.isEmpty() ? second : translated.isEmpty() ? first :
                 Component.translatable("gui.netmusic.lyrics.action_bar", first, second);
-        Minecraft.getInstance().gui.setOverlayMessage(line, false);
+        ClientPlatform.overlay(line, false);
         owner = sound;
     }
     public static void clear(Object sound) {
         if (owner == sound && owner != null) {
-            Minecraft.getInstance().gui.setOverlayMessage(Component.empty(), false);
+            ClientPlatform.overlay(Component.empty(), false);
             owner = null;
         }
     }

@@ -1,5 +1,5 @@
 """Verify real public streams with codecs and HLS handlers from the shipped JAR on GitHub."""
-import json, subprocess, urllib.request, urllib.parse, zipfile, time
+import json, subprocess, urllib.request, urllib.parse, zipfile, time, os, sys
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 import generate_radio_catalog as directory
@@ -35,7 +35,8 @@ def hls_sample(url):
     raise ValueError("Too many HLS levels")
 
 def main():
-    output = Path("build/radio-audio-samples"); output.mkdir(parents=True, exist_ok=True)
+    build = Path('build') / sys.argv[1] if len(sys.argv) > 1 else Path('build')
+    output = build / 'radio-audio-samples'; output.mkdir(parents=True, exist_ok=True)
     nationals = directory.request("/web/appBroadcast/list", {"categoryId": "0", "provinceCode": "0"})
     probes = []
     for row in nationals:
@@ -45,11 +46,12 @@ def main():
         ("BBC", ["https://stream.live.vc.bbcmedia.co.uk/bbc_world_service"], False),
         ("ABC", ["https://abc.streamguys1.com/live/rnnsw/icecast.audio"], False),
     ] + [(row["name"], [row["url"]], False) for row in json.loads(Path("scripts/regional_stations.json").read_text())]
-    jar = next(Path("build/libs").glob("*-all.jar"))
+    jar = next((build / 'libs').glob('*-all.jar'))
     with zipfile.ZipFile(jar) as archive:
         reader = next(name[:-6].replace("/", ".") for name in archive.namelist() if name.endswith("/TSAudioFileReader.class"))
-    logging_jars = list((Path.home() / ".gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api").glob("**/*.jar"))
-    classpath = ":".join([str(jar)] + [str(path) for path in logging_jars[:1]])
+    gradle_home = Path(os.environ.get('GRADLE_USER_HOME', Path.home() / '.gradle'))
+    logging_jars = list((gradle_home / 'caches/modules-2/files-2.1/org.slf4j/slf4j-api').glob('**/*.jar'))
+    classpath = os.pathsep.join([str(jar)] + [str(path) for path in logging_jars[:1]])
     def probe(item):
         index, (name, urls, live_test) = item
         errors, network = [], []
@@ -77,7 +79,7 @@ def main():
         print(json.dumps(record, ensure_ascii=False), flush=True)
         return record
     records = list(ThreadPoolExecutor(max_workers=4).map(probe, enumerate(probes)))
-    Path("build/radio-audio-report.json").write_text(json.dumps(records, ensure_ascii=False, indent=2), encoding="utf-8")
+    (build / 'radio-audio-report.json').write_text(json.dumps(records, ensure_ascii=False, indent=2), encoding="utf-8")
     failures = [record for record in records if record.get("decoder_errors") or
                 (record["name"] in ("音乐之声", "中国之声") and "shipped_hls_handler" not in record)]
     assert not failures, failures

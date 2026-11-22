@@ -1,4 +1,5 @@
 package com.github.tartaricacid.netmusic.client.gui;
+import com.github.tartaricacid.netmusic.client.ClientPlatform;
 import com.github.tartaricacid.netmusic.compat.cloth.MenuIntegration;
 import com.github.tartaricacid.netmusic.network.message.*;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -16,7 +17,7 @@ public class NetMusicControlScreen extends Screen {
     @Override protected void init() {
         int left = (width - 220) / 2, top = height / 2 - 36;
         addRenderableWidget(Button.builder(Component.translatable("gui.netmusic.control.config"),
-                b -> minecraft.setScreen(MenuIntegration.getModsConfigScreen(this))).pos(left, top).size(220, 20).build());
+                b -> ClientPlatform.setScreen(MenuIntegration.getModsConfigScreen(this))).pos(left, top).size(220, 20).build());
         music = addRenderableWidget(Button.builder(label(true), b -> send(PlaybackControlMessage.MUSIC))
                 .pos(left, top + 26).size(220, 20).build());
         radio = addRenderableWidget(Button.builder(label(false), b -> send(PlaybackControlMessage.RADIO))

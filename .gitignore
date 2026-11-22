@@ -30,3 +30,4 @@ logs/
 
 # Local JDK and dependency cache
 .tooling/
+.DS_Store

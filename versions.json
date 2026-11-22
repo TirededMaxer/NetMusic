@@ -1,0 +1,23 @@
+{
+  "26.1.2": {
+    "fabric_version": "0.146.0+26.1.2",
+    "modmenu_version": "18.0.0-alpha.8",
+    "cloth_config_version": "26.1.154+fabric",
+    "forge_config_api_port_version": "26.1.3-fabric",
+    "jei_version": "29.5.0.26-fabric"
+  },
+  "26.2": {
+    "fabric_version": "0.161.0+26.2",
+    "modmenu_version": "20.0.3",
+    "cloth_config_version": "26.2.155+fabric",
+    "forge_config_api_port_version": "rSd3GiG8",
+    "jei_version": "j62WSkzi"
+  },
+  "26.3": {
+    "fabric_version": "0.166.2+26.3",
+    "modmenu_version": "21.0.1",
+    "cloth_config_version": "26.3.159+fabric",
+    "forge_config_api_port_version": "JpKvrr9J",
+    "jei_version": "ilFFFjMD"
+  }
+}

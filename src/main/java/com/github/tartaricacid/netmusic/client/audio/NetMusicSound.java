@@ -1,4 +1,5 @@
 package com.github.tartaricacid.netmusic.client.audio;
+import com.github.tartaricacid.netmusic.client.ClientPlatform;
 
 import com.github.tartaricacid.netmusic.NetMusic;
 import com.github.tartaricacid.netmusic.api.lyric.LyricRecord;
@@ -106,7 +107,7 @@ public class NetMusicSound extends AbstractTickableSoundInstance {
         this.tick = tickTimes + 51;
         LyricsActionBar.clear(this);
         MutableComponent error = Component.translatable("message.netmusic.music_player.play_error");
-        Minecraft.getInstance().gui.setOverlayMessage(error, false);
+        ClientPlatform.overlay(error, false);
     }
 
     @Override

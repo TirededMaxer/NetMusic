@@ -1,4 +1,5 @@
 package com.github.tartaricacid.netmusic.client.audio;
+import com.github.tartaricacid.netmusic.client.ClientPlatform;
 
 import com.github.tartaricacid.netmusic.NetMusic;
 import net.fabricmc.api.*;
@@ -34,7 +35,7 @@ public final class MusicPlayManager {
                 if (current != null) Minecraft.getInstance().getSoundManager().stop(current);
                 current = factory.apply(parsed);
                 Minecraft.getInstance().getSoundManager().play(current);
-                Minecraft.getInstance().gui.setNowPlaying(Component.literal(name));
+                ClientPlatform.nowPlaying(Component.literal(name));
             });
         } catch (Exception e) { NetMusic.LOGGER.error("Malformed music URL", e); }
     }

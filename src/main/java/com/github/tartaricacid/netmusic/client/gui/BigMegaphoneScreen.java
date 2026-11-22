@@ -1,4 +1,5 @@
 package com.github.tartaricacid.netmusic.client.gui;
+import com.github.tartaricacid.netmusic.client.ClientPlatform;
 
 import com.github.tartaricacid.netmusic.client.network.ClientNetWorkHandler;
 import com.github.tartaricacid.netmusic.network.message.BigMegaphoneControlMessage;
@@ -85,7 +86,7 @@ public class BigMegaphoneScreen extends Screen {
     }
 
     private void openStationPicker() {
-        this.minecraft.setScreen(new RadioStationScreen(this));
+        ClientPlatform.setScreen(new RadioStationScreen(this));
     }
 
     @Override

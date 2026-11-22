@@ -1,17 +1,19 @@
-# NetMusic — Minecraft 26.1.2 Fabric
+# NetMusic — Minecraft 26.1.2 / 26.2 / 26.3 Fabric
 
-基于 [TartaricAcid/NetMusic](https://github.com/TartaricAcid/NetMusic) 的 26.1-fabric 分支修改。
+基于 [TartaricAcid/NetMusic](https://github.com/TartaricAcid/NetMusic) 的 26.1-fabric 分支修改，仅提供 Fabric 版本。
 
 ## 下载与安装
 
 从 [GitHub Releases](https://github.com/TirededMaxer/NetMusic/releases) 下载 **netmusic-*-all.jar** 放入 mods 文件夹。sources.jar 是源码包。
-使用 Java 25、Minecraft 26.1.2 和 Fabric Loader 0.19.2 或更新版本。客户端和服务器安装相同版本。
+使用 Java 25 和 Fabric Loader 0.20.1 或更新版本。按游戏版本下载对应的 `+mc26.1.2`、`+mc26.2` 或 `+mc26.3` 文件；客户端和服务器安装相同版本、相同 JAR。
 
-同时安装以下 Fabric 依赖，所列版本用于 GitHub 构建：
+同时安装与游戏版本对应的 Fabric 依赖，所列版本用于 GitHub 构建：
 
-- [Fabric API 0.146.0+26.1.2](https://modrinth.com/mod/fabric-api/version/Jj2SOUMp)
-- [Cloth Config 26.1.154](https://modrinth.com/mod/cloth-config/version/GFM8zh9J)
-- [Forge Config API Port 26.1.3](https://modrinth.com/mod/forge-config-api-port/version/RXbL43Lt)
+| Minecraft | Fabric API | Cloth Config | Forge Config API Port |
+| --- | --- | --- | --- |
+| 26.1.2 | [0.146.0](https://modrinth.com/mod/fabric-api/version/Jj2SOUMp) | [26.1.154](https://modrinth.com/mod/cloth-config/version/GFM8zh9J) | [26.1.3](https://modrinth.com/mod/forge-config-api-port/version/RXbL43Lt) |
+| 26.2 | [0.161.0](https://modrinth.com/mod/fabric-api/version/ewUK83HI) | [26.2.155](https://modrinth.com/mod/cloth-config/version/Nv3xnWXd) | [26.2.1](https://modrinth.com/mod/forge-config-api-port/version/rSd3GiG8) |
+| 26.3 | [0.166.2](https://modrinth.com/mod/fabric-api/version/Zns5SSRA) | [26.3.159](https://modrinth.com/mod/cloth-config/version/fg2uyxOW) | [26.3.1](https://modrinth.com/mod/forge-config-api-port/version/JpKvrr9J) |
 
 Mod Menu 可选；配置入口不依赖它。
 
@@ -53,10 +55,10 @@ Release 附带 radio-directory-report.json，记录目录数量、补充来源�
 
 ## 构建与验证
 
-开发以本地仓库为准：先在本地修改、复现问题、运行测试并构建，通过后提交并 push 到 GitHub。现有 GitHub Actions 工作流保留，继续作为额外验证和 Release 打包。
-使用 Java 25，在 IDEA 中将项目 SDK 与 Gradle JVM 都设为 Java 25。运行 `./gradlew build` 构建，产物位于 `build/libs/`。
-仓库已包含电台目录快照，直接本地构建会将其打包。需要更新目录时先运行 `python3 scripts/generate_radio_catalog.py`，再重新构建。
-运行 `./gradlew verifyMusicPlayback` 可通过完整唱片机音频链路检查歌曲 2085501870；可用 `-PmusicUrl=歌曲链接` 指定其他现有链接。正常单元测试使用本地生成的 MP3 音调，不依赖网易云网络。
+本地仅保留源码、必要的构建输入/配置与 Git 仓库，修改后 push 到 GitHub；编译、测试与 Release 打包全部由 GitHub Actions 执行。本地不构建，也不保留下载的 JDK、Gradle 缓存、运行目录或构建产物。
+构建使用 Java 25。仓库已包含电台目录快照，Actions 会更新目录后打包。
+`versions.json` 固定各版本依赖；Actions 分别使用 `-Pminecraft_version=26.1.2`、`26.2`、`26.3` 构建、测试和打包，默认目标为 26.3。共有实现位于 `src/main/java`；游戏 API 差异位于 `src/versions/<版本>/java`，同路径文件覆盖共有实现。
+`verifyMusicPlayback` 任务可通过完整唱片机音频链路检查歌曲 2085501870；可用 `-PmusicUrl=歌曲链接` 指定其他现有链接。正常单元测试使用本地生成的 MP3 音调，不依赖网易云网络。
 GitHub Actions 生成电台目录，运行播放策略、歌词时间点、HLS 解析及界面/语言检查，检查全部总台广播的单声道解码，并用正式 JAR 的 HLS 处理器实际连接中国之声及音乐之声。
 音频报告中的 network_unavailable 表示该直播源在 GitHub runner 所在网络无法访问，和解码错误分别记录。
 这些检查不替代 Minecraft 客户端内的界面、联机和移动覆盖实测。

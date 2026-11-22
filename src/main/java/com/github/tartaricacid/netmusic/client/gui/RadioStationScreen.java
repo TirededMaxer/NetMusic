@@ -1,4 +1,5 @@
 package com.github.tartaricacid.netmusic.client.gui;
+import com.github.tartaricacid.netmusic.client.ClientPlatform;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.*;
@@ -72,7 +73,7 @@ public class RadioStationScreen extends Screen {
     }
     private Entry stationEntry(RadioCatalog.Station station) {
         String label = query.isBlank() ? station.name() : Component.translatable("gui.netmusic.radio.search_result", groupLabel(station.group()), station.province(), station.name()).getString();
-        return new Entry(label, () -> { parent.applyStation(station.name(), station.url()); minecraft.setScreen(parent); });
+        return new Entry(label, () -> { parent.applyStation(station.name(), station.url()); ClientPlatform.setScreen(parent); });
     }
     private static String groupLabel(String group) {
         return Component.translatable(group.equals("总台") ? "gui.netmusic.radio.national" :
@@ -85,7 +86,7 @@ public class RadioStationScreen extends Screen {
         else if (!group.isEmpty()) navigate("", "", "");
         else onClose();
     }
-    @Override public void onClose() { minecraft.setScreen(parent); }
+    @Override public void onClose() { ClientPlatform.setScreen(parent); }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);

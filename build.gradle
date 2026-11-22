@@ -1,10 +1,22 @@
 plugins {
-    id 'net.fabricmc.fabric-loom' version '1.16-SNAPSHOT'
+    id 'net.fabricmc.fabric-loom' version '1.17.21'
     id 'com.gradleup.shadow' version '9.4.1'
 }
 
-version = project.mod_version
+def targets = new groovy.json.JsonSlurper().parse(file('versions.json'))
+def target = providers.gradleProperty('minecraft_version').get()
+if (!targets.containsKey(target)) throw new GradleException("Unsupported Minecraft version: ${target}")
+targets[target].each { key, value -> project.ext.set(key, value) }
+version = "${project.mod_version}-broadcast-fabric+mc${target}"
 group = project.maven_group
+layout.buildDirectory = file("build/${target}")
+def versionSources = file("src/versions/${target}/java")
+def overrides = fileTree(versionSources).matching { include '**/*.java' }.files.collect {
+    versionSources.toPath().relativize(it.toPath()).toString().replace('\\', '/')
+}
+sourceSets.main.java.setSrcDirs([])
+sourceSets.main.java.source(fileTree('src/main/java') { exclude overrides })
+sourceSets.main.java.srcDir(versionSources)
 
 base {
     archivesName = project.archives_base_name
@@ -176,7 +188,7 @@ processResources {
     inputs.property "version", project.version
 
     filesMatching("fabric.mod.json") {
-        expand "version": project.version
+        expand "version": project.version, "minecraft_version": target, "loader_version": project.loader_version
     }
 }
 
