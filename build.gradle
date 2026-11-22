@@ -141,9 +141,6 @@ dependencies {
     // AAC 解码库
     shadowLib("libs:javasound-aac:0.9.6")
 
-    // JEI
-    runtimeOnly("maven.modrinth:jei:${jei_version}")
-
     // ModMenu
     implementation("com.terraformersmc:modmenu:${project.modmenu_version}")
 
